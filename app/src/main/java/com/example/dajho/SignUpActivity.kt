@@ -41,6 +41,7 @@ class SignUpActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "¡Cuenta creada exitosamente para $name!", Toast.LENGTH_LONG).show()
                 finish()
+
             }
         }
     }

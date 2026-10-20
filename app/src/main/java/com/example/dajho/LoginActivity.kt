@@ -48,6 +48,10 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "Ingresa tu correo y contraseña", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "¡Bienvenido de nuevo!", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(this, HomeActivity::class.java)
+                startActivity(intent)
+                finish()
             }
         }
     }
