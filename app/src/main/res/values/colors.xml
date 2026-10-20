@@ -15,6 +15,7 @@
 
     <!-- UI Elements -->
     <color name="btn_black">#050505</color>
+    <color name="btn_text_color">#FFFFFF</color>
     <color name="input_border">#E2E4EC</color>
     <color name="input_bg">#FAFAFC</color>
     <color name="text_primary">#1A1A24</color>
@@ -22,4 +23,18 @@
     <color name="text_hint">#A0A0B2</color>
     <color name="dot_active">#050505</color>
     <color name="dot_inactive">#E0E0EA</color>
+    <color name="drag_handle_color">#D5D7E2</color>
+
+    <!-- Home Cards -->
+    <color name="stat_card_1_bg">#F8F9FE</color>
+    <color name="stat_card_2_bg">#FFF5F7</color>
+    <color name="quick_action_card_bg">#F5F3FF</color>
+
+    <!-- Badges -->
+    <color name="badge_tag_bg">#F0EDFF</color>
+    <color name="badge_tag_text">#5A4FCF</color>
+    <color name="badge_green_bg">#E8F8F0</color>
+    <color name="badge_green_text">#0E8A4A</color>
+    <color name="badge_red_bg">#FFEBF0</color>
+    <color name="badge_red_text">#D32F2F</color>
 </resources>

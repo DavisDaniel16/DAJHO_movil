@@ -18,7 +18,7 @@
         android:letterSpacing="0.03"
         android:paddingHorizontal="10dp"
         android:paddingVertical="3dp"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/badge_tag_text"
         android:textSize="11sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"

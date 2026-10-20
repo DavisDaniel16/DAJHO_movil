@@ -73,7 +73,7 @@
         android:id="@+id/cardContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/white"
+        android:background="@color/card_background"
         app:layout_constraintTop_toBottomOf="@id/topBar"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintStart_toStartOf="parent"
@@ -107,7 +107,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_weight="1"
-                        app:cardBackgroundColor="#F8F9FE"
+                        app:cardBackgroundColor="@color/stat_card_1_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -142,7 +142,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        app:cardBackgroundColor="#FFF5F7"
+                        app:cardBackgroundColor="@color/stat_card_2_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -199,7 +199,7 @@
                         android:layout_rowWeight="1"
                         android:layout_columnWeight="1"
                         android:layout_margin="6dp"
-                        app:cardBackgroundColor="#F5F3FF"
+                        app:cardBackgroundColor="@color/quick_action_card_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -235,7 +235,7 @@
                         android:layout_rowWeight="1"
                         android:layout_columnWeight="1"
                         android:layout_margin="6dp"
-                        app:cardBackgroundColor="#F5F3FF"
+                        app:cardBackgroundColor="@color/quick_action_card_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -271,7 +271,7 @@
                         android:layout_rowWeight="1"
                         android:layout_columnWeight="1"
                         android:layout_margin="6dp"
-                        app:cardBackgroundColor="#F5F3FF"
+                        app:cardBackgroundColor="@color/quick_action_card_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -307,7 +307,7 @@
                         android:layout_rowWeight="1"
                         android:layout_columnWeight="1"
                         android:layout_margin="6dp"
-                        app:cardBackgroundColor="#F5F3FF"
+                        app:cardBackgroundColor="@color/quick_action_card_bg"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
@@ -359,9 +359,9 @@
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        app:itemIconTint="@color/purple_primary"
-        app:itemTextColor="@color/text_primary"
+        android:background="@color/card_background"
+        app:itemIconTint="@color/nav_item_tint"
+        app:itemTextColor="@color/nav_item_tint"
         app:menu="@menu/bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

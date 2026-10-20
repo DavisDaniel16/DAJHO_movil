@@ -91,4 +91,22 @@
     <string name="error_min_one_variant">Agrega al menos una variante con talla y stock</string>
     <string name="saved_product_ok">Producto guardado</string>
     <string name="default_category">General</string>
+
+    <!-- Fase 2: Gestion de Clientes -->
+    <string name="title_clients">Gestión de Clientes</string>
+    <string name="subtitle_clients">Administra contactos y saldos pendientes</string>
+    <string name="hint_search_client">Buscar por nombre o teléfono…</string>
+    <string name="btn_new_client">+ Nuevo Cliente</string>
+    <string name="title_modal_new_client">Nuevo Cliente</string>
+    <string name="title_modal_edit_client">Editar Cliente</string>
+    <string name="hint_client_name">Nombre completo</string>
+    <string name="hint_client_phone">Número de teléfono</string>
+    <string name="hint_client_email">Correo / Dirección (opcional)</string>
+    <string name="hint_client_debt">Saldo inicial o deuda ($ USD)</string>
+    <string name="status_ok">AL DÍA</string>
+    <string name="status_debt">CON DEUDA</string>
+    <string name="debt_balance_format">Saldo: $%1$.2f</string>
+    <string name="btn_save_client">GUARDAR CLIENTE</string>
+    <string name="empty_clients">No hay clientes registrados o coincidentes.</string>
+    <string name="saved_client_ok">Cliente guardado con éxito</string>
 </resources>

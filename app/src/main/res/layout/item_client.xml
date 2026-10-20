@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_card_product"
+    android:padding="16dp">
+
+    <!-- Client Name -->
+    <TextView
+        android:id="@+id/tvClientName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvStatusBadge"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="María Fernanda López" />
+
+    <!-- Status Badge ("AL DÍA" / "CON DEUDA") -->
+    <TextView
+        android:id="@+id/tvStatusBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_badge_green"
+        android:letterSpacing="0.03"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:textColor="#0E8A4A"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="AL DÍA" />
+
+    <!-- Phone Row -->
+    <LinearLayout
+        android:id="@+id/llPhoneRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvClientDebt"
+        app:layout_constraintTop_toBottomOf="@id/tvClientName">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_phone" />
+
+        <TextView
+            android:id="@+id/tvClientPhone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            tools:text="099 123 4567" />
+    </LinearLayout>
+
+    <!-- Email or Address optional line -->
+    <TextView
+        android:id="@+id/tvClientInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="12dp"
+        android:textColor="@color/text_hint"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvClientDebt"
+        app:layout_constraintTop_toBottomOf="@id/llPhoneRow"
+        tools:text="marialopez@email.com" />
+
+    <!-- Pending Debt Amount -->
+    <TextView
+        android:id="@+id/tvClientDebt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvStatusBadge"
+        android:layout_marginTop="8dp"
+        tools:text="Saldo: $0.00" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

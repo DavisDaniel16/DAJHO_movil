@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand & Accent Colors -->
+    <color name="purple_primary">#A362FF</color>
+    <color name="pink_accent">#FF2A85</color>
+    <color name="cyan_accent">#00D2FF</color>
+
+    <!-- Backgrounds (Dark Mode) -->
+    <color name="dark_header_bg">#0D0B1A</color>
+    <color name="card_background">#181528</color>
+    <color name="app_background">#0D0B1A</color>
+
+    <!-- UI Elements (Dark Mode) -->
+    <color name="btn_black">#8028F5</color>
+    <color name="btn_text_color">#FFFFFF</color>
+    <color name="input_border">#332E50</color>
+    <color name="input_bg">#221F38</color>
+    <color name="text_primary">#F5F5FA</color>
+    <color name="text_secondary">#A0A0C0</color>
+    <color name="text_hint">#8C8CA4</color>
+    <color name="dot_active">#8028F5</color>
+    <color name="dot_inactive">#332E50</color>
+    <color name="drag_handle_color">#4A4860</color>
+
+    <!-- Home Cards (Dark Mode) -->
+    <color name="stat_card_1_bg">#1E1B33</color>
+    <color name="stat_card_2_bg">#2D1722</color>
+    <color name="quick_action_card_bg">#221C38</color>
+
+    <!-- Badges (Dark Mode) -->
+    <color name="badge_tag_bg">#2D2545</color>
+    <color name="badge_tag_text">#B388FF</color>
+    <color name="badge_green_bg">#153324</color>
+    <color name="badge_green_text">#66BB6A</color>
+    <color name="badge_red_bg">#3B1A22</color>
+    <color name="badge_red_text">#FF8A80</color>
+</resources>

@@ -1,7 +1,49 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme (Dark Mode). -->
     <style name="Base.Theme.DAJHO" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">@color/purple_primary</item>
+        <item name="colorSecondary">@color/pink_accent</item>
+
+        <!-- Superficies oscuras coherentes -->
+        <item name="colorSurface">@color/card_background</item>
+        <item name="colorSurfaceContainer">@color/card_background</item>
+        <item name="colorSurfaceContainerLow">@color/card_background</item>
+        <item name="colorSurfaceContainerHigh">@color/input_bg</item>
+        <item name="android:statusBarColor">@color/dark_header_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="bottomSheetStyle">@style/DAJHO_BottomSheet</item>
+        <item name="bottomSheetDialogTheme">@style/DAJHO_BottomSheetDialog</item>
+    </style>
+
+    <style name="Theme.DAJHO" parent="Base.Theme.DAJHO" />
+
+    <style name="DAJHO_BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="android:background">@color/card_background</item>
+        <item name="shapeAppearanceOverlay">@style/DAJHO_SheetShape</item>
+    </style>
+
+    <style name="DAJHO_BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/DAJHO_BottomSheet</item>
+    </style>
+
+    <style name="DAJHO_SheetShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">28dp</item>
+        <item name="cornerSizeTopRight">28dp</item>
+    </style>
+
+    <!-- Rounded Input Field Style -->
+    <style name="PillTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">28dp</item>
+        <item name="boxCornerRadiusTopEnd">28dp</item>
+        <item name="boxCornerRadiusBottomStart">28dp</item>
+        <item name="boxCornerRadiusBottomEnd">28dp</item>
+        <item name="boxStrokeColor">@color/input_border</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxBackgroundColor">@color/input_bg</item>
+        <item name="hintTextColor">@color/text_hint</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 </resources>

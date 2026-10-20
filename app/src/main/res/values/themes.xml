@@ -3,23 +3,24 @@
     <style name="Base.Theme.DAJHO" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/purple_primary</item>
         <item name="colorSecondary">@color/pink_accent</item>
+
+        <!-- Superficies dinamicas basadas en colorSemantic -->
+        <item name="colorSurface">@color/card_background</item>
+        <item name="colorSurfaceContainer">@color/card_background</item>
+        <item name="colorSurfaceContainerLow">@color/card_background</item>
+        <item name="colorSurfaceContainerHigh">@color/input_bg</item>
         <item name="android:statusBarColor">@color/dark_header_bg</item>
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- Superficies blancas: corrige el fondo lila de los Bottom Sheets -->
-        <item name="colorSurface">@color/white</item>
-        <item name="colorSurfaceContainer">@color/white</item>
-        <item name="colorSurfaceContainerLow">@color/white</item>
-        <item name="colorSurfaceContainerHigh">@color/input_bg</item>
         <item name="bottomSheetStyle">@style/DAJHO_BottomSheet</item>
         <item name="bottomSheetDialogTheme">@style/DAJHO_BottomSheetDialog</item>
     </style>
 
     <style name="Theme.DAJHO" parent="Base.Theme.DAJHO" />
 
-    <!-- Bottom Sheet blanco redondeado (mismo radio que bg_bottom_sheet_dialog.xml) -->
+    <!-- Bottom Sheet con esquinas redondeadas -->
     <style name="DAJHO_BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
-        <item name="android:background">@color/white</item>
+        <item name="android:background">@color/card_background</item>
         <item name="shapeAppearanceOverlay">@style/DAJHO_SheetShape</item>
     </style>
 
