@@ -5,9 +5,33 @@
         <item name="colorSecondary">@color/pink_accent</item>
         <item name="android:statusBarColor">@color/dark_header_bg</item>
         <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Superficies blancas: corrige el fondo lila de los Bottom Sheets -->
+        <item name="colorSurface">@color/white</item>
+        <item name="colorSurfaceContainer">@color/white</item>
+        <item name="colorSurfaceContainerLow">@color/white</item>
+        <item name="colorSurfaceContainerHigh">@color/input_bg</item>
+        <item name="bottomSheetStyle">@style/DAJHO_BottomSheet</item>
+        <item name="bottomSheetDialogTheme">@style/DAJHO_BottomSheetDialog</item>
     </style>
 
     <style name="Theme.DAJHO" parent="Base.Theme.DAJHO" />
+
+    <!-- Bottom Sheet blanco redondeado (mismo radio que bg_bottom_sheet_dialog.xml) -->
+    <style name="DAJHO_BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="android:background">@color/white</item>
+        <item name="shapeAppearanceOverlay">@style/DAJHO_SheetShape</item>
+    </style>
+
+    <style name="DAJHO_BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/DAJHO_BottomSheet</item>
+    </style>
+
+    <style name="DAJHO_SheetShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">28dp</item>
+        <item name="cornerSizeTopRight">28dp</item>
+    </style>
 
     <!-- Rounded Input Field Style -->
     <style name="PillTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -20,5 +44,6 @@
         <item name="boxBackgroundColor">@color/input_bg</item>
         <item name="hintTextColor">@color/text_hint</item>
         <item name="android:textColorHint">@color/text_hint</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 </resources>

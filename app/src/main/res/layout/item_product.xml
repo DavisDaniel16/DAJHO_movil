@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_card_product"
+    android:padding="14dp">
+
+    <!-- SKU Badge -->
+    <TextView
+        android:id="@+id/tvSkuBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_badge_tag"
+        android:letterSpacing="0.03"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="3dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="SKU: CAM-001" />
+
+    <!-- Category Tag (right) -->
+    <TextView
+        android:id="@+id/tvCategoryTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tvSkuBadge"
+        app:layout_constraintEnd_toStartOf="@id/tvPrice"
+        tools:text="Ropa" />
+
+    <!-- Price (right) -->
+    <TextView
+        android:id="@+id/tvPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@id/tvSkuBadge"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="$12.50" />
+
+    <!-- Name -->
+    <TextView
+        android:id="@+id/tvProductName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="8dp"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/stockColumn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvSkuBadge"
+        tools:text="Camiseta Polo Bordada" />
+
+    <!-- Brand -->
+    <TextView
+        android:id="@+id/tvProductBrand"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="8dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@id/stockColumn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvProductName"
+        tools:text="Marca: DAJHO" />
+
+    <!-- Stock Column (right) -->
+    <LinearLayout
+        android:id="@+id/stockColumn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvPrice"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:id="@+id/tvStockValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="24 und" />
+
+        <TextView
+            android:id="@+id/tvVariantsSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            tools:text="3 variantes" />
+    </LinearLayout>
+
+    <!-- Variant summary chips (text line) -->
+    <TextView
+        android:id="@+id/tvVariantChips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:letterSpacing="0.02"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        app:layout_constraintEnd_toStartOf="@id/stockColumn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvProductBrand"
+        tools:text="Tallas: S M L · Colores: Negro, Blanco" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

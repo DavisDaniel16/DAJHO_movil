@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import com.example.dajho.catalog.ProductCatalogActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 
@@ -39,7 +40,7 @@ class HomeActivity : AppCompatActivity() {
             // TODO: Open New Sale Activity
         }
         findViewById<View>(R.id.cardInventory).setOnClickListener {
-            // TODO: Open Inventory Activity
+            startActivity(Intent(this, ProductCatalogActivity::class.java))
         }
         findViewById<View>(R.id.cardClients).setOnClickListener {
             // TODO: Open Clients Activity
@@ -65,7 +66,10 @@ class HomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_home -> true
                 R.id.nav_sales -> true
-                R.id.nav_inventory -> true
+                R.id.nav_inventory -> {
+                    startActivity(Intent(this, ProductCatalogActivity::class.java))
+                    false
+                }
                 R.id.nav_clients -> true
                 R.id.nav_settings -> true
                 else -> false

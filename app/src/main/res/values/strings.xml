@@ -50,4 +50,45 @@
     <string name="nav_settings">Ajustes</string>
 
     <string name="btn_logout">Cerrar Sesión</string>
+
+    <!-- Fase 1: Catalogo de Productos -->
+    <string name="title_inventory">Catálogo de Productos</string>
+    <string name="subtitle_inventory">Gestión de ropa, calzado y stock</string>
+    <string name="hint_search_product">Buscar por SKU, nombre o categoría…</string>
+    <string name="btn_new_product">+ Nuevo Producto</string>
+    <string name="title_modal_new_product">Nuevo Producto</string>
+    <string name="label_product_info">Información General</string>
+    <string name="hint_sku">Código / SKU (Ej. CAM-001)</string>
+    <string name="hint_prod_name">Nombre del producto (Ej. Camiseta Polo)</string>
+    <string name="hint_brand">Marca (Ej. DAJHO, Genérica)</string>
+    <string name="hint_category">Categoría (Ej. Ropa, Calzado, Accesorio)</string>
+    <string name="label_pricing_rimpe">Precios (Régimen RIMPE - Sin IVA)</string>
+    <string name="hint_cost_price">Costo ($ USD)</string>
+    <string name="hint_sale_price">Precio Venta ($ USD)</string>
+    <string name="label_variants_header">Variantes (Talla y Color)</string>
+    <string name="hint_variant_size">Talla (Ej. M, 38)</string>
+    <string name="hint_variant_color">Color (Ej. Negro)</string>
+    <string name="hint_variant_stock">Stock</string>
+    <string name="hint_variant_size_short">Talla</string>
+    <string name="hint_variant_color_short">Color</string>
+    <string name="hint_variant_stock_short">Stock</string>
+    <string name="btn_add_variant">+ Agregar Variante</string>
+    <string name="btn_save_product">GUARDAR PRODUCTO</string>
+    <string name="empty_catalog">No hay productos que coincidan con la búsqueda.</string>
+    <string name="label_margin">Margen estimado:</string>
+    <string name="variant_label_format">Variante %1$d</string>
+    <string name="delete_variant_desc">Eliminar variante</string>
+
+    <!-- Prefijos y formatos del catalogo -->
+    <string name="sku_prefix">SKU: %1$s</string>
+    <string name="brand_prefix">Marca: %1$s</string>
+    <string name="price_format">$%1$.2f</string>
+    <string name="stock_format">%1$d und</string>
+    <string name="variants_count_format">%1$d variantes</string>
+    <string name="variant_summary_format">Tallas: %1$s · Colores: %2$s</string>
+    <string name="margin_format">Margen estimado: $%1$.2f (%2$d%%)</string>
+    <string name="error_required_field">Campo obligatorio</string>
+    <string name="error_min_one_variant">Agrega al menos una variante con talla y stock</string>
+    <string name="saved_product_ok">Producto guardado</string>
+    <string name="default_category">General</string>
 </resources>
