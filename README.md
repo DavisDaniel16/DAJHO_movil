@@ -4,7 +4,7 @@
 ---
 
 ## 📱 Descripción del Proyecto
-**DAJHO** es una aplicación móvil nativa para Android diseñada específicamente para optimizar la gestión comercial de pequeños y medianos comercios minoristas (especialmente tiendas de ropa, calzado y accesorios) en Ecuador, alineándose con los requerimientos del régimen **RIMPE Negocio Popular**. La aplicación ofrece una interfaz moderna, intuitiva y ágil para el control de inventario, registro de ventas y supervisión de clientes.
+**DAJHO** es una aplicación móvil nativa para Android diseñada específicamente para optimizar la gestión comercial de pequeños y medianos comercios minoristas (especialmente tiendas de ropa y calzado ) en Ecuador, alineándose con los requerimientos del régimen **RIMPE Negocio Popular**. La aplicación ofrece una interfaz moderna, intuitiva y ágil para el control de inventario, registro de ventas y supervisión de clientes.
 
 ---
 

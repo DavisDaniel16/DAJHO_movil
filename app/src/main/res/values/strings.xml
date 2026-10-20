@@ -22,9 +22,32 @@
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="dont_have_account">¿No tienes una cuenta? Regístrate</string>
 
-    <!-- Home Screen (Pantalla de Inicio) -->
-    <string name="home_greeting">Hola de nuevo</string>
-    <string name="home_welcome">¡Bienvenido a DAJHO!</string>
-    <string name="home_session_active">Tu sesión está iniciada.</string>
-    <string name="btn_logout">CERRAR SESIÓN</string>
+    <!-- Home Dashboard Screen -->
+    <string name="greeting_morning">Buenos días</string>
+    <string name="greeting_afternoon">Buenas tardes</string>
+    <string name="greeting_evening">Buenas noches</string>
+    <string name="user_greeting">%1$s, %2$s</string>
+    <string name="profile_desc">Perfil de usuario</string>
+    <string name="quick_actions_title">Acciones Rápidas</string>
+
+    <!-- Quick Stats -->
+    <string name="label_today_sales">Ventas de Hoy</string>
+    <string name="sample_sales_amount">$0.00</string>
+    <string name="label_low_stock">Stock Bajo</string>
+    <string name="sample_stock_alerts">0 alertas</string>
+
+    <!-- Quick Actions -->
+    <string name="action_new_sale">Nueva Venta</string>
+    <string name="action_inventory">Inventario</string>
+    <string name="action_clients">Clientes / Fiados</string>
+    <string name="action_reports">Reportes</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_sales">Ventas</string>
+    <string name="nav_inventory">Inventario</string>
+    <string name="nav_clients">Clientes</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <string name="btn_logout">Cerrar Sesión</string>
 </resources>
