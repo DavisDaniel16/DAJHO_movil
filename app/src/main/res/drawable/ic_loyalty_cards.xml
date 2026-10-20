@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Top card shadow/back card -->
+    <path
+        android:fillColor="#1A1A24"
+        android:pathData="M14,16 h36 a6,6 0 0,1 6,6 v16 a6,6 0 0,1 -6,6 h-36 a6,6 0 0,1 -6,-6 v-16 a6,6 0 0,1 6,-6 z" />
+
+    <!-- Top card accent stripe -->
+    <path
+        android:fillColor="#00D2FF"
+        android:pathData="M8,22 h48 v5 h-48 z" />
+
+    <!-- Front card -->
+    <path
+        android:fillColor="#050505"
+        android:pathData="M10,26 h44 a6,6 0 0,1 6,6 v18 a6,6 0 0,1 -6,6 h-44 a6,6 0 0,1 -6,-6 v-18 a6,6 0 0,1 6,-6 z" />
+
+    <!-- Front card stripe -->
+    <path
+        android:fillColor="#8028F5"
+        android:pathData="M4,33 h56 v6 h-56 z" />
+
+    <!-- Front card chip / magnetic bar -->
+    <path
+        android:fillColor="#FF2A85"
+        android:pathData="M10,44 h12 v3 h-12 z" />
+</vector>

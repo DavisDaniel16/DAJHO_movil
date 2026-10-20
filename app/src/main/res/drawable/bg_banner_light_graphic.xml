@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="260dp"
+    android:viewportWidth="360"
+    android:viewportHeight="260">
+
+    <!-- Background base -->
+    <path
+        android:fillColor="#8028F5"
+        android:pathData="M0,0 h360 v260 h-360 z" />
+
+    <!-- Top Left Magenta/Purple Circle -->
+    <path
+        android:fillColor="#FF2A85"
+        android:pathData="M-20,40 a80,80 0 1,0 160,0 a80,80 0 1,0 -160,0" />
+
+    <!-- Right Cyan Blob/Circle -->
+    <path
+        android:fillColor="#00D2FF"
+        android:pathData="M230,120 a110,110 0 1,0 220,0 a110,110 0 1,0 -220,0" />
+
+    <!-- Right Magenta Circle overlapping -->
+    <path
+        android:fillColor="#FF2A85"
+        android:pathData="M310,30 a75,75 0 1,0 150,0 a75,75 0 1,0 -150,0" />
+
+</vector>

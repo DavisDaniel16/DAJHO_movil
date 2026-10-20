@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="240dp"
+    android:viewportWidth="360"
+    android:viewportHeight="240">
+
+    <!-- Dark Header Base Background -->
+    <path
+        android:fillColor="#0D0B1A"
+        android:pathData="M0,0 h360 v240 h-360 z" />
+
+    <!-- Wave 1: Pink/Magenta Neon Wave -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M-20,40 C60,10 120,90 200,40 C260,0 320,80 380,30"
+        android:strokeColor="#FF2A85"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- Wave 2: Purple Neon Wave -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M-20,70 C70,110 130,30 210,80 C270,120 330,40 380,90"
+        android:strokeColor="#8028F5"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+
+    <!-- Wave 3: Cyan Neon Wave -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M-20,110 C50,150 140,80 220,130 C280,170 320,100 380,140"
+        android:strokeColor="#00D2FF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+</vector>

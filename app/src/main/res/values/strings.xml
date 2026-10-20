@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">DAJHO</string>
+    <string name="dajho_brand">DAJHO</string>
+    <string name="dajho_tagline">Gestiona · Vende · Crece</string>
+
+    <string name="back_desc">Volver</string>
+    <string name="dajho_logo_desc">Logo de DAJHO</string>
+
+    <!-- Sign Up Screen (Pantalla de Registro) -->
+    <string name="title_sign_up">Crear cuenta</string>
+    <string name="hint_full_name">Nombre completo</string>
+    <string name="hint_phone_number">Número de teléfono</string>
+    <string name="hint_email">Correo electrónico</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="btn_create_account">CREAR CUENTA</string>
+    <string name="already_have_account">¿Ya tienes una cuenta? Inicia sesión</string>
+
+    <!-- Login Screen (Pantalla de Inicio de Sesión) -->
+    <string name="title_login">Iniciar Sesión</string>
+    <string name="btn_login">INICIAR SESIÓN</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="dont_have_account">¿No tienes una cuenta? Regístrate</string>
+</resources>
