@@ -54,7 +54,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="@string/punch_tagline"
+            android:text="@string/dajho_tagline"
             android:textColor="#C0FFFFFF"
             android:textSize="12sp"
             android:letterSpacing="0.02" />

@@ -5,6 +5,7 @@
 
     <string name="back_desc">Volver</string>
     <string name="dajho_logo_desc">Logo de DAJHO</string>
+    <string name="header_graphic_desc">Gráfico de encabezado</string>
 
     <!-- Sign Up Screen (Pantalla de Registro) -->
     <string name="title_sign_up">Crear cuenta</string>
