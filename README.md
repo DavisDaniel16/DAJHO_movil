@@ -4,15 +4,16 @@
 ---
 
 ## 📱 Descripción del Proyecto
-**DAJHO** es una aplicación móvil nativa para Android diseñada específicamente para optimizar la gestión comercial de pequeños y medianos comercios minoristas (especialmente tiendas de ropa y calzado ) en Ecuador, alineándose con los requerimientos del régimen **RIMPE Negocio Popular**. La aplicación ofrece una interfaz moderna, intuitiva y ágil para el control de inventario, registro de ventas y supervisión de clientes.
+**DAJHO** es una aplicación móvil nativa para Android diseñada específicamente para optimizar la gestión comercial de pequeños y medianos comercios minoristas (tiendas de ropa, calzado y accesorios) en Ecuador, alineándose con los requerimientos del régimen **RIMPE Negocio Popular**. La aplicación ofrece una interfaz moderna, intuitiva y ágil para el control de inventario, registro de ventas y supervisión de clientes.
 
 ---
 
 ## ✨ Características Principales (Features)
 
-- **Autenticación Moderna y Segura:** Pantallas de inicio de sesión (*Login*) y registro de nuevos usuarios (*Sign Up*) con validación de formularios en tiempo real.
-- **Diseño UI de Alta Gama:** Interfaz visual con paleta de colores vibrantes (tonos neón y morados), tarjetas flotantes con bordes redondeados y soporte adaptativo.
-- **Pantalla Principal (Home):** Panel de bienvenida con indicador de sesión activa y opción de cierre de sesión seguro (*Logout*).
+- **Dashboard Comercial (Home):** Panel principal equipado con un saludo dinámico según la hora del día, acceso directo al perfil de usuario y widgets de resumen rápido (*Ventas de Hoy* y *Stock Bajo*).
+- **Acceso Rápido (Quick Actions):** Cuadrícula interactiva de 2x2 para acceder instantáneamente a los módulos clave: *Nueva Venta*, *Inventario*, *Clientes / Fiados* y *Reportes*.
+- **Navegación Inferior (Bottom Navigation):** Barra de navegación profesional con 5 accesos principales (*Inicio*, *Ventas*, *Inventario*, *Clientes*, *Ajustes*).
+- **Autenticación Moderna y Segura:** Pantallas de inicio de sesión (*Login*) y registro (*Sign Up*) con fondos oscuros, ondas neón y validación de formularios.
 - **Enfoque Comercial:** Diseñado para facilitar el control de stock categorizado por tallas y colores, ideal para comercios de moda.
 
 ---
@@ -20,8 +21,8 @@
 ## 🛠️ Stack Tecnológico
 
 - **Lenguaje:** [Kotlin](https://kotlinlang.org/) (100% Nativo)
-- **Interfaz de Usuario:** XML Layouts, ConstraintLayout, Material Design 3 Components (`TextInputLayout`, `MaterialButton`, `CardView`).
-- **Arquitectura:** Patrón basado en Activities orientadas a flujos de autenticación e inicio.
+- **Interfaz de Usuario:** XML Layouts, ConstraintLayout, Material Design 3 Components (`BottomNavigationView`, `TextInputLayout`, `MaterialButton`, `CardView`).
+- **Arquitectura:** Patrón basado en Activities orientadas a flujos de autenticación y panel de control (*Dashboard*).
 - **Entorno de Desarrollo:** [Android Studio](https://developer.android.com/studio)
 - **Control de Versiones:** Git / GitHub
 
@@ -33,7 +34,7 @@ El código fuente principal se encuentra en `app/src/main/java/com/example/dajho
 
 - `LoginActivity.kt`: Gestiona el acceso de los usuarios registrados y sirve como punto de entrada principal (*Launcher*).
 - `SignUpActivity.kt`: Administra el registro de nuevas cuentas de comercio con validación de datos (nombre, teléfono, correo y contraseña).
-- `HomeActivity.kt`: Panel de bienvenida tras un inicio de sesión exitoso, mostrando la sesión activa y el botón de cierre de sesión.
+- `HomeActivity.kt`: Panel de control principal (*Dashboard*) con saludo inteligente por horario, widgets de estadísticas, acciones rápidas, barra de navegación inferior y cierre de sesión.
 
 ---
 
@@ -74,9 +75,10 @@ Sigue estos pasos para poner en marcha el proyecto:
 ## 🚧 Estado del Proyecto
 
 Actualmente, **DAJHO** se encuentra en su fase de **Producto Mínimo Viable (MVP)**:
-- ✅ Módulo de Autenticación (Login, Registro y Home).
+- ✅ Módulo de Autenticación (Login y Registro).
+- ✅ Dashboard Principal (Saludo inteligente, widgets de estadísticas, grid de acciones rápidas y barra de navegación inferior).
 - ✅ Diseño de interfaz (*Design System*) implementado.
-- 🔄 Módulos de Inventario, Gestión de Stock por Talla/Color y Punto de Venta (POS) en desarrollo activo.
+- 🔄 Módulos específicos de Inventario, Punto de Venta (POS) y Clientes en desarrollo activo.
 
 ---
 
