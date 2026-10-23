@@ -86,6 +86,8 @@
     <string name="stock_format">%1$d und</string>
     <string name="variants_count_format">%1$d variantes</string>
     <string name="variant_summary_format">Tallas: %1$s · Colores: %2$s</string>
+    <string name="sizes_prefix">Tallas: %1$s</string>
+    <string name="hint_change_image">Toca para seleccionar imagen</string>
     <string name="margin_format">Margen estimado: $%1$.2f (%2$d%%)</string>
     <string name="error_required_field">Campo obligatorio</string>
     <string name="error_min_one_variant">Agrega al menos una variante con talla y stock</string>

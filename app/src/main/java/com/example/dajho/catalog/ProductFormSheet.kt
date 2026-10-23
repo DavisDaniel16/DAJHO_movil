@@ -1,14 +1,17 @@
 package com.example.dajho.catalog
 
 import android.app.Dialog
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -20,12 +23,10 @@ import com.example.dajho.R
 import java.util.Locale
 
 /**
- * Formulario de Nuevo/Editar Producto (Fase 1 - solo frontend).
- * Modal tipo Bottom Sheet con variantes dinamicas y calculo de margen.
+ * Formulario de Nuevo/Editar Producto con soporte de imagen e info esencial.
  */
 class ProductFormSheet : BottomSheetDialogFragment() {
 
-    /** Callback invocado al guardar (la Activity asigna este listener). */
     var onProductSaved: ((Product) -> Unit)? = null
 
     private lateinit var tilSku: TextInputLayout
@@ -41,14 +42,26 @@ class ProductFormSheet : BottomSheetDialogFragment() {
     private lateinit var btnAddVariant: View
     private lateinit var btnSaveProduct: View
     private lateinit var btnCloseForm: ImageButton
+    private lateinit var cardSelectImage: View
+    private lateinit var ivFormProductImage: ImageView
 
     private lateinit var variantAdapter: VariantInputAdapter
     private val variantList = mutableListOf<ProductVariant>()
 
     private var editProductId: Long = -1L
+    private var selectedImageUri: String? = null
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it.toString()
+            ivFormProductImage.setImageURI(it)
+            ivFormProductImage.setPadding(0, 0, 0, 0)
+        }
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        @Suppress("DEPRECATION")
         dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         return dialog
     }
@@ -85,11 +98,23 @@ class ProductFormSheet : BottomSheetDialogFragment() {
         btnAddVariant = view.findViewById(R.id.btnAddVariant)
         btnSaveProduct = view.findViewById(R.id.btnSaveProduct)
         btnCloseForm = view.findViewById(R.id.btnCloseForm)
+        cardSelectImage = view.findViewById(R.id.cardSelectImage)
+        ivFormProductImage = view.findViewById(R.id.ivFormProductImage)
 
-        // Pre-carga en modo edicion (encode: size~color~stock)
+        cardSelectImage.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
         val editSku = arguments?.getString(ARG_SKU) ?: ""
         if (editSku.isNotBlank()) {
             editProductId = arguments?.getLong(ARG_ID) ?: -1L
+            selectedImageUri = arguments?.getString(ARG_IMAGE)
+            if (!selectedImageUri.isNullOrBlank()) {
+                try {
+                    ivFormProductImage.setImageURI(Uri.parse(selectedImageUri))
+                    ivFormProductImage.setPadding(0, 0, 0, 0)
+                } catch (_: Exception) {}
+            }
             etSku.setText(editSku)
             etProdName.setText(arguments?.getString(ARG_NAME) ?: "")
             etBrand.setText(arguments?.getString(ARG_BRAND) ?: "")
@@ -123,7 +148,7 @@ class ProductFormSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupVariantsList() {
-        variantAdapter = VariantInputAdapter(variantList) { /* cambios de texto */ }
+        variantAdapter = VariantInputAdapter(variantList) {}
         rvVariants.layoutManager = LinearLayoutManager(requireContext())
         rvVariants.adapter = variantAdapter
         rvVariants.isNestedScrollingEnabled = false
@@ -181,6 +206,7 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                 category = category.ifEmpty { getString(R.string.default_category) },
                 cost = cost,
                 salePrice = price,
+                imageUri = selectedImageUri,
                 variants = validVariants.mapIndexed { index, v ->
                     ProductVariant(id = index.toLong(), size = v.size, color = v.color, stock = v.stock)
                 }.toMutableList()
@@ -229,6 +255,7 @@ class ProductFormSheet : BottomSheetDialogFragment() {
         private const val ARG_CATEGORY = "arg_category"
         private const val ARG_COST = "arg_cost"
         private const val ARG_PRICE = "arg_price"
+        private const val ARG_IMAGE = "arg_image"
         private const val ARG_VARIANTS = "arg_variants"
         private const val ARG_IS_EDIT = "arg_is_edit"
 
@@ -243,6 +270,7 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                     putString(ARG_CATEGORY, product.category)
                     putDouble(ARG_COST, product.cost)
                     putDouble(ARG_PRICE, product.salePrice)
+                    putString(ARG_IMAGE, product.imageUri)
                     putBoolean(ARG_IS_EDIT, true)
                     putStringArrayList(
                         ARG_VARIANTS,

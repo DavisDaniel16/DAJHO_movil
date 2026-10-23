@@ -41,7 +41,7 @@ class ProductCatalogActivity : AppCompatActivity() {
         adapter = ProductAdapter(visibleProducts) { product ->
             showProductForm(product)
         }
-        rvProducts.layoutManager = LinearLayoutManager(this)
+        rvProducts.layoutManager = androidx.recyclerview.widget.GridLayoutManager(this, 2)
         rvProducts.adapter = adapter
 
         btnBack.setOnClickListener { finish() }

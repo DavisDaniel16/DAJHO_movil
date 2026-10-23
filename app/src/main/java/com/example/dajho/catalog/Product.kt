@@ -12,6 +12,7 @@ data class Product(
     val category: String,
     val cost: Double,
     val salePrice: Double,
+    val imageUri: String? = null,
     val variants: MutableList<ProductVariant> = mutableListOf()
 ) {
     fun totalStock(): Int = variants.sumOf { it.stock }
@@ -19,7 +20,7 @@ data class Product(
     fun variantCount(): Int = variants.size
 
     fun sizesSummary(): String =
-        variants.map { it.size }.filter { it.isNotBlank() }.distinct().joinToString(" ")
+        variants.map { it.size }.filter { it.isNotBlank() }.distinct().joinToString(", ")
 
     fun colorsSummary(): String =
         variants.map { it.color }.filter { it.isNotBlank() }.distinct().joinToString(", ")

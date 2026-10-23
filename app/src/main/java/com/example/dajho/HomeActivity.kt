@@ -1,19 +1,33 @@
 package com.example.dajho
 
-import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatButton
-import com.example.dajho.catalog.ProductCatalogActivity
-import com.example.dajho.clients.ClientListActivity
+import androidx.fragment.app.Fragment
+import com.example.dajho.catalog.ProductCatalogFragment
+import com.example.dajho.clients.ClientListFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 
+/**
+ * Activity contenedora principal que aloja los modulos (Dashboard, Inventario, Clientes, POS).
+ * Navegacion fluida sin abrir ventanas separadas.
+ */
 class HomeActivity : AppCompatActivity() {
+
+    private lateinit var bottomNavigation: BottomNavigationView
+
+    private val homeDashboardFragment by lazy {
+        HomeDashboardFragment().apply {
+            onModuleNavigate = { navItemId ->
+                bottomNavigation.selectedItemId = navItemId
+            }
+        }
+    }
+    private val productCatalogFragment by lazy { ProductCatalogFragment() }
+    private val clientListFragment by lazy { ClientListFragment() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,51 +47,46 @@ class HomeActivity : AppCompatActivity() {
         // 2. Profile Button Click
         val btnProfile = findViewById<ImageButton>(R.id.btnProfile)
         btnProfile.setOnClickListener {
-            // TODO: Open Profile Activity
+            Toast.makeText(this, "Perfil de comercio DAJHO", Toast.LENGTH_SHORT).show()
         }
 
-        // 3. Quick Actions Click Listeners
-        findViewById<View>(R.id.cardNewSale).setOnClickListener {
-            // TODO: Open New Sale Activity
-        }
-        findViewById<View>(R.id.cardInventory).setOnClickListener {
-            startActivity(Intent(this, ProductCatalogActivity::class.java))
-        }
-        findViewById<View>(R.id.cardClients).setOnClickListener {
-            startActivity(Intent(this, ClientListActivity::class.java))
-        }
-        findViewById<View>(R.id.cardReports).setOnClickListener {
-            // TODO: Open Reports Activity
+        // 3. Bottom Navigation View setup
+        bottomNavigation = findViewById(R.id.bottomNavigation)
+
+        if (savedInstanceState == null) {
+            loadFragment(homeDashboardFragment)
         }
 
-        // 4. Logout Button Click
-        val btnLogout = findViewById<AppCompatButton>(R.id.btnLogout)
-        btnLogout.setOnClickListener {
-            Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
-        }
-
-        // 5. Bottom Navigation View
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        bottomNavigation.selectedItemId = R.id.nav_home
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> true
-                R.id.nav_sales -> true
+                R.id.nav_home -> {
+                    loadFragment(homeDashboardFragment)
+                    true
+                }
+                R.id.nav_sales -> {
+                    Toast.makeText(this, "Punto de Venta (POS) - Próxima Fase", Toast.LENGTH_SHORT).show()
+                    true
+                }
                 R.id.nav_inventory -> {
-                    startActivity(Intent(this, ProductCatalogActivity::class.java))
-                    false
+                    loadFragment(productCatalogFragment)
+                    true
                 }
                 R.id.nav_clients -> {
-                    startActivity(Intent(this, ClientListActivity::class.java))
-                    false
+                    loadFragment(clientListFragment)
+                    true
                 }
-                R.id.nav_settings -> true
+                R.id.nav_settings -> {
+                    Toast.makeText(this, "Ajustes del comercio", Toast.LENGTH_SHORT).show()
+                    true
+                }
                 else -> false
             }
         }
+    }
+
+    private fun loadFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.cardContainer, fragment)
+            .commit()
     }
 }
