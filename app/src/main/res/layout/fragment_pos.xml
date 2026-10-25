@@ -204,7 +204,27 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Client Selector Card (Shows when Fiado or optional) -->
+            <!-- Transfer Reference Input Field (Visible only when Transferencia is selected) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTransferReference"
+                style="@style/PillTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/hint_transfer_reference"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTransferReference"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapCharacters"
+                    android:maxLines="1"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Client Selector Card -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardClientSelector"
                 android:layout_width="match_parent"

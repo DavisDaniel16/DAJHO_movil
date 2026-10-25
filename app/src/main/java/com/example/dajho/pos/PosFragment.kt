@@ -13,16 +13,19 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
 import com.example.dajho.catalog.Product
 import com.example.dajho.clients.Client
+import com.example.dajho.clients.ClientFormSheet
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
  * Módulo de Punto de Venta (POS - Fase 3).
- * Búsqueda de productos, selección explícita por toque, variante, carrito, fiado y comprobante RIMPE.
+ * Búsqueda, selección por toque, comprobante de transferencia y Fiado estricto con cliente obligatorio.
  */
 class PosFragment : Fragment() {
 
@@ -33,7 +36,7 @@ class PosFragment : Fragment() {
     private lateinit var searchAdapter: PosProductSearchAdapter
 
     private var selectedPaymentMethod = PaymentMethod.CASH
-    private var selectedClient: Client? = null
+    private var selectedClient: Client? = null // Default es Consumidor Final (null)
 
     // Base de datos en memoria para simular el API del POS
     private val catalogList = mutableListOf<Product>()
@@ -46,6 +49,8 @@ class PosFragment : Fragment() {
     private lateinit var btnPayCash: TextView
     private lateinit var btnPayTransfer: TextView
     private lateinit var btnPayCredit: TextView
+    private lateinit var tilTransferReference: TextInputLayout
+    private lateinit var etTransferReference: TextInputEditText
     private lateinit var cardClientSelector: View
     private lateinit var tvSelectedClientName: TextView
     private lateinit var btnSelectClient: View
@@ -70,6 +75,8 @@ class PosFragment : Fragment() {
         btnPayCash = view.findViewById(R.id.btnPayCash)
         btnPayTransfer = view.findViewById(R.id.btnPayTransfer)
         btnPayCredit = view.findViewById(R.id.btnPayCredit)
+        tilTransferReference = view.findViewById(R.id.tilTransferReference)
+        etTransferReference = view.findViewById(R.id.etTransferReference)
         cardClientSelector = view.findViewById(R.id.cardClientSelector)
         tvSelectedClientName = view.findViewById(R.id.tvSelectedClientName)
         btnSelectClient = view.findViewById(R.id.btnSelectClient)
@@ -131,7 +138,6 @@ class PosFragment : Fragment() {
 
     private fun setupSearchResults() {
         searchAdapter = PosProductSearchAdapter(searchResults) { selectedProduct ->
-            // El usuario toca explícitamente el producto resultantes de la búsqueda
             rvSearchResults.visibility = View.GONE
             etSearch.text.clear()
             promptSelectProductVariant(selectedProduct)
@@ -210,47 +216,84 @@ class PosFragment : Fragment() {
         btnPayCredit.background = ContextCompat.getDrawable(requireContext(), if (method == PaymentMethod.CREDIT) bgSelected else bgUnselected)
         btnPayCredit.setTextColor(if (method == PaymentMethod.CREDIT) colorSelected else colorUnselected)
 
-        // Exigir cliente si es Fiado / Credito
-        if (method == PaymentMethod.CREDIT) {
-            cardClientSelector.visibility = View.VISIBLE
-            if (selectedClient == null && clientsList.isNotEmpty()) {
-                selectedClient = clientsList[0]
-            }
-            updateClientDisplay()
-        } else {
-            cardClientSelector.visibility = View.VISIBLE
+        // Mostrar u ocultar campo de Comprobante de Transferencia
+        tilTransferReference.visibility = if (method == PaymentMethod.TRANSFER) View.VISIBLE else View.GONE
+
+        // Regla estricta para Fiado/Crédito: Exige cliente obligatoriamente (no Consumidor Final)
+        if (method == PaymentMethod.CREDIT && selectedClient == null) {
+            openClientPicker(allowConsumerFinal = false)
         }
+
+        updateClientDisplay()
     }
 
     private fun setupClientPicker() {
         btnSelectClient.setOnClickListener {
-            val picker = ClientPickerSheet.newInstance(clientsList)
-            picker.onClientSelected = { client ->
-                selectedClient = client
-                updateClientDisplay()
-            }
-            picker.show(childFragmentManager, ClientPickerSheet.TAG)
+            val allowConsumer = (selectedPaymentMethod != PaymentMethod.CREDIT)
+            openClientPicker(allowConsumerFinal = allowConsumer)
         }
         updateClientDisplay()
     }
 
+    private fun openClientPicker(allowConsumerFinal: Boolean) {
+        val picker = ClientPickerSheet.newInstance(clientsList, allowConsumerFinal)
+        picker.onClientSelected = { client ->
+            selectedClient = client
+            updateClientDisplay()
+        }
+        picker.onCreateNewClientRequested = {
+            openNewClientForm()
+        }
+        picker.show(childFragmentManager, ClientPickerSheet.TAG)
+    }
+
+    private fun openNewClientForm() {
+        val formSheet = ClientFormSheet.newInstance(null)
+        formSheet.onClientSaved = { newClient ->
+            clientsList.add(newClient)
+            selectedClient = newClient
+            updateClientDisplay()
+        }
+        formSheet.show(childFragmentManager, "NewClientInPos")
+    }
+
     private fun updateClientDisplay() {
+        val ctx = context ?: return
         if (selectedClient != null) {
             tvSelectedClientName.text = "${selectedClient?.name} (${selectedClient?.phone})"
+            tvSelectedClientName.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+        } else if (selectedPaymentMethod == PaymentMethod.CREDIT) {
+            tvSelectedClientName.text = "Seleccionar cliente obligatoriamente"
+            tvSelectedClientName.setTextColor(ContextCompat.getColor(ctx, R.color.badge_red_text))
         } else {
-            tvSelectedClientName.text = getString(R.string.no_client_selected)
+            tvSelectedClientName.text = getString(R.string.consumer_final_label)
+            tvSelectedClientName.setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
         }
     }
 
     private fun setupCheckout() {
         btnCheckout.setOnClickListener {
+            tilTransferReference.error = null
+
             if (cartItems.isEmpty()) {
                 Toast.makeText(requireContext(), R.string.error_empty_cart, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            // Validacion de comprobante para Transferencia
+            var transferRef: String? = null
+            if (selectedPaymentMethod == PaymentMethod.TRANSFER) {
+                transferRef = etTransferReference.text?.toString()?.trim().orEmpty()
+                if (transferRef.isEmpty()) {
+                    tilTransferReference.error = getString(R.string.error_transfer_ref_required)
+                    return@setOnClickListener
+                }
+            }
+
+            // Validacion de cliente obligatorio para Fiado / Crédito
             if (selectedPaymentMethod == PaymentMethod.CREDIT && selectedClient == null) {
                 Toast.makeText(requireContext(), R.string.error_select_client_required, Toast.LENGTH_LONG).show()
+                openClientPicker(allowConsumerFinal = false)
                 return@setOnClickListener
             }
 
@@ -273,6 +316,7 @@ class PosFragment : Fragment() {
                 items = ArrayList(cartItems),
                 paymentMethod = selectedPaymentMethod,
                 client = selectedClient,
+                transferReference = transferRef,
                 totalAmount = total
             )
 
@@ -281,6 +325,9 @@ class PosFragment : Fragment() {
             receiptSheet.onClose = {
                 cartItems.clear()
                 cartAdapter.notifyDataSetChanged()
+                etTransferReference.text?.clear()
+                selectedClient = null
+                selectPaymentMethod(PaymentMethod.CASH)
                 updateCartSummary()
             }
             receiptSheet.show(childFragmentManager, ReceiptSheet.TAG)

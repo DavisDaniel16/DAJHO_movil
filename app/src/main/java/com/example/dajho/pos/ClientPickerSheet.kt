@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,11 +17,14 @@ import com.example.dajho.clients.Client
 import com.example.dajho.clients.ClientAdapter
 
 /**
- * BottomSheetDialogFragment para buscar y seleccionar cliente en ventas Fiadas (Fase 3).
+ * BottomSheetDialogFragment para buscar, seleccionar o crear cliente en POS (Fase 3).
+ * Soporta ocultar "Consumidor Final" en ventas Fiadas/Crédito.
  */
 class ClientPickerSheet : BottomSheetDialogFragment() {
 
-    var onClientSelected: ((Client) -> Unit)? = null
+    var allowConsumerFinal: Boolean = true
+    var onClientSelected: ((Client?) -> Unit)? = null
+    var onCreateNewClientRequested: (() -> Unit)? = null
     var clientList: List<Client> = emptyList()
 
     private val visibleClients = mutableListOf<Client>()
@@ -40,8 +44,25 @@ class ClientPickerSheet : BottomSheetDialogFragment() {
         val btnClose: ImageButton = view.findViewById(R.id.btnCloseClientPicker)
         val etSearch: EditText = view.findViewById(R.id.etSearchClientPicker)
         val rvClients: RecyclerView = view.findViewById(R.id.rvClientPicker)
+        val btnConsumerFinal: Button = view.findViewById(R.id.btnSelectConsumerFinal)
+        val btnCreateNew: Button = view.findViewById(R.id.btnCreateNewClientInPicker)
 
         btnClose.setOnClickListener { dismiss() }
+
+        if (!allowConsumerFinal) {
+            btnConsumerFinal.visibility = View.GONE
+        } else {
+            btnConsumerFinal.visibility = View.VISIBLE
+            btnConsumerFinal.setOnClickListener {
+                onClientSelected?.invoke(null)
+                dismiss()
+            }
+        }
+
+        btnCreateNew.setOnClickListener {
+            dismiss()
+            onCreateNewClientRequested?.invoke()
+        }
 
         visibleClients.clear()
         visibleClients.addAll(clientList)
@@ -74,9 +95,10 @@ class ClientPickerSheet : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG = "ClientPickerSheet"
-        fun newInstance(clients: List<Client>): ClientPickerSheet {
+        fun newInstance(clients: List<Client>, allowConsumerFinal: Boolean = true): ClientPickerSheet {
             val sheet = ClientPickerSheet()
             sheet.clientList = clients
+            sheet.allowConsumerFinal = allowConsumerFinal
             return sheet
         }
     }

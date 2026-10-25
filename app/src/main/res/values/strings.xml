@@ -122,7 +122,11 @@
     <string name="pay_credit">Fiado / Crédito</string>
     <string name="label_selected_client">Cliente asociado:</string>
     <string name="btn_select_client">Seleccionar Cliente</string>
-    <string name="no_client_selected">Ningún cliente seleccionado (Exigido para Fiado)</string>
+    <string name="no_client_selected">Consumidor Final</string>
+    <string name="consumer_final_label">Consumidor Final</string>
+    <string name="btn_create_new_client_pos">+ Crear Nuevo Cliente</string>
+    <string name="hint_transfer_reference">Nro. de comprobante / transferencia</string>
+    <string name="error_transfer_ref_required">Ingresa el número de comprobante de transferencia</string>
     <string name="label_cart_total">TOTAL A PAGAR</string>
     <string name="btn_checkout">FINALIZAR VENTA</string>
     <string name="empty_cart">El carrito está vacío. Agrega productos arriba.</string>

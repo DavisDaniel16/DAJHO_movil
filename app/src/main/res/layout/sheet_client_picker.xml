@@ -87,12 +87,44 @@
                 app:layout_constraintEnd_toEndOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Options Bar: Consumidor Final & + Crear Nuevo Cliente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSelectConsumerFinal"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_pill_outline"
+                android:text="@string/consumer_final_label"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnCreateNewClientInPicker"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_pill_black"
+                android:text="@string/btn_create_new_client_pos"
+                android:textColor="@color/btn_text_color"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- Client List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvClientPicker"
             android:layout_width="match_parent"
-            android:layout_height="280dp"
-            android:layout_marginTop="12dp"
+            android:layout_height="240dp"
+            android:layout_marginTop="10dp"
             tools:listitem="@layout/item_client" />
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

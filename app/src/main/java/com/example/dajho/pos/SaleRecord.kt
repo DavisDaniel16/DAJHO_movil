@@ -11,6 +11,7 @@ data class SaleRecord(
     val items: List<CartItem>,
     val paymentMethod: PaymentMethod,
     val client: Client?,
+    val transferReference: String? = null,
     val totalAmount: Double
 )
 
