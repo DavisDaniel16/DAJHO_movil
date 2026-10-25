@@ -47,7 +47,7 @@
     <string name="nav_sales">Ventas</string>
     <string name="nav_inventory">Inventario</string>
     <string name="nav_clients">Clientes</string>
-    <string name="nav_settings">Ajustes</string>
+    <string name="nav_settings">Caja</string>
 
     <string name="btn_logout">Cerrar Sesión</string>
 
@@ -148,4 +148,35 @@
     <string name="sample_catalog_count">35 productos</string>
     <string name="title_weekly_chart">Resumen de Ventas Semanal</string>
     <string name="title_recent_sales">Actividad Reciente</string>
+
+    <!-- Fase 4: Caja y Deudas -->
+    <string name="title_cash_debt">Caja y Deudas</string>
+    <string name="subtitle_cash_debt">Cuadre de turno y cobro de fiados</string>
+    <string name="label_cash_register">Control de Caja</string>
+    <string name="status_cash_open">CAJA ABIERTA</string>
+    <string name="status_cash_closed">CAJA CERRADA</string>
+    <string name="label_initial_cash">Monto Inicial:</string>
+    <string name="label_cash_sales">Ventas Efectivo:</string>
+    <string name="label_collected_debts">Abonos Cobrados:</string>
+    <string name="label_expected_cash">Efectivo Esperado:</string>
+    <string name="btn_open_cash">ABRIR CAJA</string>
+    <string name="btn_close_cash">CERRAR CAJA / ARQUEO</string>
+    <string name="label_debtors_section">Cuentas por Cobrar (Deudas)</string>
+    <string name="btn_pay_debt">REGISTRAR ABONO</string>
+    <string name="title_modal_open_cash">Apertura de Caja</string>
+    <string name="hint_initial_cash">Monto inicial en efectivo ($ USD)</string>
+    <string name="title_modal_close_cash">Cierre de Caja y Arqueo</string>
+    <string name="hint_counted_cash">Efectivo físico contado ($ USD)</string>
+    <string name="label_cash_difference">Diferencia de Arqueo:</string>
+    <string name="title_modal_debt_payment">Registrar Abono a Deuda</string>
+    <string name="hint_payment_amount">Monto del abono ($ USD)</string>
+    <string name="btn_confirm_payment">CONFIRMAR ABONO</string>
+    <string name="btn_confirm_open_cash">CONFIRMAR APERTURA</string>
+    <string name="btn_confirm_close_cash">CONFIRMAR CIERRE</string>
+    <string name="error_invalid_amount">Ingresa un monto válido mayor a $0.00</string>
+    <string name="error_amount_exceeds_debt">El abono no puede superar la deuda actual ($%1$.2f)</string>
+    <string name="empty_debtors">¡Excelente! No hay clientes con deudas pendientes.</string>
+    <string name="debt_payment_success">Abono registrado con éxito</string>
+    <string name="cash_open_success">Caja abierta correctamente</string>
+    <string name="cash_close_success">Caja cerrada y arqueo registrado</string>
 </resources>

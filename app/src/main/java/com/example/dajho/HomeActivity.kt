@@ -6,6 +6,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.example.dajho.cash.CashDebtFragment
 import com.example.dajho.catalog.ProductCatalogFragment
 import com.example.dajho.clients.ClientListFragment
 import com.example.dajho.pos.PosFragment
@@ -13,7 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 
 /**
- * Activity contenedora principal que aloja los modulos (Dashboard, Inventario, Clientes, POS).
+ * Activity contenedora principal que aloja los modulos (Dashboard, Inventario, Clientes, POS, Caja y Deudas).
  * Navegacion fluida sin abrir ventanas separadas.
  */
 class HomeActivity : AppCompatActivity() {
@@ -24,6 +25,7 @@ class HomeActivity : AppCompatActivity() {
     private val posFragment by lazy { PosFragment() }
     private val productCatalogFragment by lazy { ProductCatalogFragment() }
     private val clientListFragment by lazy { ClientListFragment() }
+    private val cashDebtFragment by lazy { CashDebtFragment() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +74,7 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_settings -> {
-                    Toast.makeText(this, "Ajustes del comercio", Toast.LENGTH_SHORT).show()
+                    loadFragment(cashDebtFragment)
                     true
                 }
                 else -> false
