@@ -111,4 +111,41 @@
     <string name="btn_save_client">GUARDAR CLIENTE</string>
     <string name="empty_clients">No hay clientes registrados o coincidentes.</string>
     <string name="saved_client_ok">Cliente guardado con éxito</string>
+
+    <!-- Fase 3: Punto de Venta (POS) -->
+    <string name="title_pos">Punto de Venta (POS)</string>
+    <string name="subtitle_pos">Ventas, caja y notas de venta RIMPE</string>
+    <string name="hint_search_pos">Buscar producto por SKU o nombre…</string>
+    <string name="label_payment_method">Método de pago:</string>
+    <string name="pay_cash">Efectivo</string>
+    <string name="pay_transfer">Transferencia</string>
+    <string name="pay_credit">Fiado / Crédito</string>
+    <string name="label_selected_client">Cliente asociado:</string>
+    <string name="btn_select_client">Seleccionar Cliente</string>
+    <string name="no_client_selected">Ningún cliente seleccionado (Exigido para Fiado)</string>
+    <string name="label_cart_total">TOTAL A PAGAR</string>
+    <string name="btn_checkout">FINALIZAR VENTA</string>
+    <string name="empty_cart">El carrito está vacío. Agrega productos arriba.</string>
+    <string name="title_select_variant">Selecciona Talla / Color</string>
+    <string name="title_select_client">Selecciona el Cliente para Fiado</string>
+    <string name="title_receipt_rimpe">NOTA DE VENTA SIMPLE</string>
+    <string name="subtitle_receipt_rimpe">Régimen RIMPE - Negocio Popular (Sin IVA)</string>
+    <string name="receipt_date_label">Fecha / Hora:</string>
+    <string name="receipt_client_label">Cliente:</string>
+    <string name="receipt_payment_label">Forma de pago:</string>
+    <string name="receipt_items_label">Detalle de Productos:</string>
+    <string name="receipt_total_label">Monto Total:</string>
+    <string name="btn_close_receipt">NUEVA VENTA / CERRAR</string>
+    <string name="error_select_client_required">Debes seleccionar un cliente para registrar la venta Fiada</string>
+    <string name="error_empty_cart">Agrega al menos un producto al carrito</string>
+    <string name="sale_completed_ok">Venta registrada y comprobante generado</string>
+
+    <!-- Dashboard Comercial -->
+    <string name="title_dashboard_kpis">Métricas del Negocio</string>
+    <string name="label_total_receivables">Deudas por Cobrar</string>
+    <string name="label_total_catalog">En Catálogo</string>
+    <string name="sample_receivables_amount">$43.50</string>
+    <string name="sample_catalog_count">35 productos</string>
+    <string name="title_weekly_chart">Resumen de Ventas Semanal</string>
+    <string name="title_recent_sales">Actividad Reciente</string>
 </resources>

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.dajho.catalog.ProductCatalogFragment
 import com.example.dajho.clients.ClientListFragment
+import com.example.dajho.pos.PosFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 
@@ -19,13 +20,8 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationView
 
-    private val homeDashboardFragment by lazy {
-        HomeDashboardFragment().apply {
-            onModuleNavigate = { navItemId ->
-                bottomNavigation.selectedItemId = navItemId
-            }
-        }
-    }
+    private val homeDashboardFragment by lazy { HomeDashboardFragment() }
+    private val posFragment by lazy { PosFragment() }
     private val productCatalogFragment by lazy { ProductCatalogFragment() }
     private val clientListFragment by lazy { ClientListFragment() }
 
@@ -64,7 +60,7 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_sales -> {
-                    Toast.makeText(this, "Punto de Venta (POS) - Próxima Fase", Toast.LENGTH_SHORT).show()
+                    loadFragment(posFragment)
                     true
                 }
                 R.id.nav_inventory -> {
