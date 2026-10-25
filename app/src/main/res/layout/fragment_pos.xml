@@ -37,74 +37,76 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Quick Product Search Bar -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/searchBarPos"
+    <!-- Search Bar + QR Scanner Button -->
+    <LinearLayout
+        android:id="@+id/searchRowPos"
         android:layout_width="0dp"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/bg_search_bar"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@id/topBarPos"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/ivSearchPosIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_search"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <EditText
-            android:id="@+id/etSearchPos"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/searchBarPos"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="4dp"
-            android:background="@android:color/transparent"
-            android:hint="@string/hint_search_pos"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            android:maxLines="1"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_hint"
-            android:textSize="13sp"
-            app:layout_constraintStart_toEndOf="@id/ivSearchPosIcon"
-            app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_search_bar">
 
-    <!-- Floating Search Results Dropdown/List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPosSearchResults"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/bg_card_product"
-        android:elevation="8dp"
-        android:maxHeight="200dp"
-        android:padding="8dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/searchBarPos"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_pos_product_search"
-        tools:visibility="gone" />
+            <ImageView
+                android:id="@+id/ivSearchPosIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="14dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_search"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Scrollable content area: Cart list + Payment Selection -->
+            <EditText
+                android:id="@+id/etSearchPos"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:background="@android:color/transparent"
+                android:hint="@string/hint_search_pos"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:textSize="13sp"
+                app:layout_constraintStart_toEndOf="@id/ivSearchPosIcon"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- QR Code / Barcode Scanner Camera Button -->
+        <ImageButton
+            android:id="@+id/btnScanQr"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_search_bar"
+            android:contentDescription="Escáner QR"
+            android:padding="12dp"
+            android:src="@drawable/ic_qr_code" />
+    </LinearLayout>
+
+    <!-- Scrollable Body: Catalog Grid + Cart & Checkout Section -->
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="100dp"
-        app:layout_constraintTop_toBottomOf="@id/searchBarPos"
+        android:paddingBottom="120dp"
+        app:layout_constraintTop_toBottomOf="@id/searchRowPos"
         app:layout_constraintBottom_toTopOf="@id/checkoutBottomBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -113,13 +115,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="12dp"
             android:paddingTop="12dp">
 
-            <!-- Cart Items Section -->
+            <!-- Section 1: Catalog Products Grid (2 Columns) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:letterSpacing="0.05"
+                android:text="TOCA UN PRODUCTO PARA VENDER"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPosCatalogGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:nestedScrollingEnabled="false"
+                tools:itemCount="3"
+                tools:listitem="@layout/item_product" />
+
+            <!-- Section 2: Cart Items -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="20dp"
                 android:letterSpacing="0.05"
                 android:text="CARRITO DE COMPRAS"
                 android:textColor="@color/text_secondary"
@@ -132,14 +156,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_cart"
-                tools:itemCount="2" />
+                tools:itemCount="1"
+                tools:listitem="@layout/item_cart" />
 
             <TextView
                 android:id="@+id/tvEmptyCart"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="24dp"
+                android:padding="20dp"
                 android:gravity="center"
                 android:text="@string/empty_cart"
                 android:textColor="@color/text_secondary"
@@ -147,10 +171,11 @@
                 android:visibility="gone"
                 tools:visibility="gone" />
 
-            <!-- Payment Method Section -->
+            <!-- Section 3: Payment Method -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginTop="20dp"
                 android:letterSpacing="0.05"
                 android:text="@string/label_payment_method"
@@ -204,7 +229,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Transfer Reference Input Field (Visible only when Transferencia is selected) -->
+            <!-- Transfer Reference Input Field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilTransferReference"
                 style="@style/PillTextInputLayout"

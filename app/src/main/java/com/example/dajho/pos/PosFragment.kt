@@ -1,5 +1,8 @@
 package com.example.dajho.pos
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -7,16 +10,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
 import com.example.dajho.catalog.Product
+import com.example.dajho.catalog.ProductAdapter
 import com.example.dajho.clients.Client
 import com.example.dajho.clients.ClientFormSheet
 import java.text.SimpleDateFormat
@@ -25,15 +32,15 @@ import java.util.Locale
 
 /**
  * Módulo de Punto de Venta (POS - Fase 3).
- * Búsqueda, selección por toque, comprobante de transferencia y Fiado estricto con cliente obligatorio.
+ * Integración de Catálogo Visual Grid (2 columnas) + Escáner QR a pantalla completa (QrScannerActivity) + Carrito + Fiado estricto.
  */
 class PosFragment : Fragment() {
 
     private val cartItems = mutableListOf<CartItem>()
     private lateinit var cartAdapter: CartAdapter
 
-    private val searchResults = mutableListOf<Product>()
-    private lateinit var searchAdapter: PosProductSearchAdapter
+    private val visibleProducts = mutableListOf<Product>()
+    private lateinit var catalogGridAdapter: ProductAdapter
 
     private var selectedPaymentMethod = PaymentMethod.CASH
     private var selectedClient: Client? = null // Default es Consumidor Final (null)
@@ -43,7 +50,8 @@ class PosFragment : Fragment() {
     private val clientsList = mutableListOf<Client>()
 
     private lateinit var etSearch: EditText
-    private lateinit var rvSearchResults: RecyclerView
+    private lateinit var btnScanQr: ImageButton
+    private lateinit var rvCatalogGrid: RecyclerView
     private lateinit var rvCartItems: RecyclerView
     private lateinit var tvEmptyCart: TextView
     private lateinit var btnPayCash: TextView
@@ -57,6 +65,39 @@ class PosFragment : Fragment() {
     private lateinit var tvCartTotalAmount: TextView
     private lateinit var btnCheckout: View
 
+    // Scanner Activity Result Launcher
+    private val scannerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val scannedCode = result.data?.getStringExtra(QrScannerActivity.EXTRA_SCAN_RESULT).orEmpty()
+            if (scannedCode.isNotBlank()) {
+                val match = catalogList.find { it.sku.equals(scannedCode, ignoreCase = true) }
+                if (match != null) {
+                    promptSelectProductVariant(match)
+                    Toast.makeText(requireContext(), "Escaneado: ${match.name}", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Código no encontrado: $scannedCode", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    // Camera Permission Launcher
+    private val requestCameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            openQrScannerActivity()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Se requiere permiso de cámara para escaneo QR/Barras",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -69,7 +110,8 @@ class PosFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         etSearch = view.findViewById(R.id.etSearchPos)
-        rvSearchResults = view.findViewById(R.id.rvPosSearchResults)
+        btnScanQr = view.findViewById(R.id.btnScanQr)
+        rvCatalogGrid = view.findViewById(R.id.rvPosCatalogGrid)
         rvCartItems = view.findViewById(R.id.rvCartItems)
         tvEmptyCart = view.findViewById(R.id.tvEmptyCart)
         btnPayCash = view.findViewById(R.id.btnPayCash)
@@ -84,9 +126,10 @@ class PosFragment : Fragment() {
         btnCheckout = view.findViewById(R.id.btnCheckout)
 
         loadSeedData()
+        setupCatalogGrid()
         setupCartList()
-        setupSearchResults()
         setupSearchTextWatcher()
+        setupQrScannerButton()
         setupPaymentMethods()
         setupClientPicker()
         setupCheckout()
@@ -126,6 +169,17 @@ class PosFragment : Fragment() {
             clientsList.add(Client(2L, "Carlos Alberto Mendoza", "098 765 4321", "carlos@gmail.com", 28.50))
             clientsList.add(Client(3L, "Lucía Beatriz Ramos", "096 987 6543", "Mercado Central", 15.00))
         }
+
+        filterCatalog(etSearch.text?.toString().orEmpty())
+    }
+
+    private fun setupCatalogGrid() {
+        catalogGridAdapter = ProductAdapter(visibleProducts) { selectedProduct ->
+            promptSelectProductVariant(selectedProduct)
+        }
+        rvCatalogGrid.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvCatalogGrid.adapter = catalogGridAdapter
+        rvCatalogGrid.isNestedScrollingEnabled = false
     }
 
     private fun setupCartList() {
@@ -134,16 +188,7 @@ class PosFragment : Fragment() {
         }
         rvCartItems.layoutManager = LinearLayoutManager(requireContext())
         rvCartItems.adapter = cartAdapter
-    }
-
-    private fun setupSearchResults() {
-        searchAdapter = PosProductSearchAdapter(searchResults) { selectedProduct ->
-            rvSearchResults.visibility = View.GONE
-            etSearch.text.clear()
-            promptSelectProductVariant(selectedProduct)
-        }
-        rvSearchResults.layoutManager = LinearLayoutManager(requireContext())
-        rvSearchResults.adapter = searchAdapter
+        rvCartItems.isNestedScrollingEnabled = false
     }
 
     private fun setupSearchTextWatcher() {
@@ -151,17 +196,46 @@ class PosFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                val query = s?.toString()?.trim()?.lowercase().orEmpty()
-                searchResults.clear()
-                if (query.isNotBlank()) {
-                    searchResults.addAll(catalogList.filter {
-                        it.sku.lowercase().contains(query) || it.name.lowercase().contains(query)
-                    })
-                }
-                searchAdapter.updateData(searchResults)
-                rvSearchResults.visibility = if (searchResults.isNotEmpty()) View.VISIBLE else View.GONE
+                filterCatalog(s?.toString().orEmpty())
             }
         })
+    }
+
+    private fun filterCatalog(query: String) {
+        val q = query.trim().lowercase()
+        visibleProducts.clear()
+        if (q.isEmpty()) {
+            visibleProducts.addAll(catalogList)
+        } else {
+            visibleProducts.addAll(catalogList.filter {
+                it.sku.lowercase().contains(q) ||
+                    it.name.lowercase().contains(q) ||
+                    it.category.lowercase().contains(q)
+            })
+        }
+        if (::catalogGridAdapter.isInitialized) {
+            catalogGridAdapter.updateData(visibleProducts)
+        }
+    }
+
+    private fun setupQrScannerButton() {
+        btnScanQr.setOnClickListener {
+            checkCameraPermissionAndScan()
+        }
+    }
+
+    private fun checkCameraPermissionAndScan() {
+        val permission = Manifest.permission.CAMERA
+        if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED) {
+            openQrScannerActivity()
+        } else {
+            requestCameraPermissionLauncher.launch(permission)
+        }
+    }
+
+    private fun openQrScannerActivity() {
+        val intent = Intent(requireContext(), QrScannerActivity::class.java)
+        scannerLauncher.launch(intent)
     }
 
     private fun promptSelectProductVariant(product: Product) {
@@ -329,6 +403,9 @@ class PosFragment : Fragment() {
                 selectedClient = null
                 selectPaymentMethod(PaymentMethod.CASH)
                 updateCartSummary()
+                if (::catalogGridAdapter.isInitialized) {
+                    catalogGridAdapter.notifyDataSetChanged()
+                }
             }
             receiptSheet.show(childFragmentManager, ReceiptSheet.TAG)
         }
