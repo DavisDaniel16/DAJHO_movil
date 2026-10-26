@@ -33,8 +33,6 @@ class ProductCatalogActivity : AppCompatActivity() {
         val btnNewProduct: View = findViewById(R.id.btnNewProduct)
         val btnBack: ImageView = findViewById(R.id.btnBackCatalog)
 
-        loadSeedData()
-
         adapter = ProductAdapter(visibleProducts) { product ->
             showProductForm(product)
         }
@@ -54,56 +52,6 @@ class ProductCatalogActivity : AppCompatActivity() {
                 filterProducts(s?.toString().orEmpty())
             }
         })
-    }
-
-    private fun loadSeedData() {
-        productList.clear()
-        productList.add(
-            Product(
-                id = "CAM-001-ID",
-                sku = "CAM-001",
-                name = "Camiseta Polo Bordada",
-                brand = "DAJHO",
-                category = "Ropa",
-                cost = 6.50,
-                salePrice = 12.50,
-                variants = mutableListOf(
-                    ProductVariant("V1", "S", "Negro", 5),
-                    ProductVariant("V2", "M", "Negro", 8),
-                    ProductVariant("V3", "L", "Blanco", 6)
-                )
-            )
-        )
-        productList.add(
-            Product(
-                id = "ZAP-042-ID",
-                sku = "ZAP-042",
-                name = "Zapatilla Deportiva Urbana",
-                brand = "Genérica",
-                category = "Calzado",
-                cost = 14.00,
-                salePrice = 25.00,
-                variants = mutableListOf(
-                    ProductVariant("V4", "38", "Blanco", 4),
-                    ProductVariant("V5", "40", "Negro", 7)
-                )
-            )
-        )
-        productList.add(
-            Product(
-                id = "GOR-009-ID",
-                sku = "GOR-009",
-                name = "Gorra Visera Curva",
-                brand = "Genérica",
-                category = "Accesorio",
-                cost = 3.20,
-                salePrice = 7.00,
-                variants = mutableListOf(
-                    ProductVariant("V6", "Única", "Negro", 12)
-                )
-            )
-        )
-        filterProducts(etSearch.text?.toString().orEmpty())
     }
 
     private fun filterProducts(query: String) {

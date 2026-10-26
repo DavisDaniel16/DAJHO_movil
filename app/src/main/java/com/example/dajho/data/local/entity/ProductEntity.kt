@@ -5,10 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Productos en inventario (Fase 3).
- * IDs en UUID string, montos en céntimos enteros (Long) y soft-delete deletedAt.
+ * Entidad Room para Productos (Tabla "productos").
  */
-@Entity(tableName = "products")
+@Entity(tableName = "productos")
 data class ProductEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

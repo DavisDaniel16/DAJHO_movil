@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configura tu negocio"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Completa estos datos para terminar tu registro."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etSetupBusinessName"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:hint="Nombre del negocio"
+            android:inputType="textCapSentences" />
+
+        <EditText
+            android:id="@+id/etSetupRuc"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="RUC o cédula (opcional)"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/etSetupPhone"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Teléfono del negocio"
+            android:inputType="phone" />
+
+        <EditText
+            android:id="@+id/etSetupAddress"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Dirección (opcional)"
+            android:inputType="textCapSentences" />
+
+        <Spinner
+            android:id="@+id/spinnerSetupRimpe"
+            android:layout_width="match_parent"
+            android:layout_height="56dp" />
+
+        <Button
+            android:id="@+id/btnCompleteBusinessSetup"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:text="GUARDAR Y CONTINUAR" />
+    </LinearLayout>
+</ScrollView>

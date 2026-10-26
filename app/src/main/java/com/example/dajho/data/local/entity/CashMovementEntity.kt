@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Movimientos de Caja en un Turno (Fase 8).
+ * Entidad Room para Movimientos de Caja (Tabla "movimientos_caja").
  */
 @Entity(
-    tableName = "cash_movements",
+    tableName = "movimientos_caja",
     foreignKeys = [
         ForeignKey(
             entity = CashSessionEntity::class,

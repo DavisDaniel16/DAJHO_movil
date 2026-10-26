@@ -27,14 +27,16 @@ import com.example.dajho.catalog.Product
 import com.example.dajho.catalog.ProductAdapter
 import com.example.dajho.clients.Client
 import com.example.dajho.clients.ClientFormSheet
-import com.example.dajho.data.InMemoryStore
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.DatabaseSeeder
+import com.example.dajho.data.local.datastore.UserPreferences
 import com.example.dajho.data.local.entity.PaymentEntity
+import com.example.dajho.data.local.entity.ClientEntity
 import com.example.dajho.data.local.entity.SaleEntity
 import com.example.dajho.data.local.entity.SaleItemEntity
 import com.example.dajho.util.toCentsLong
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,6 +58,7 @@ class PosFragment : Fragment() {
 
     private var selectedPaymentMethod = PaymentMethod.CASH
     private var selectedClient: Client? = null // Default es Consumidor Final (null)
+    private val clientIdsByUiId = mutableMapOf<Long, String>()
 
     private lateinit var etSearch: EditText
     private lateinit var btnScanQr: ImageButton
@@ -81,7 +84,6 @@ class PosFragment : Fragment() {
             val scannedCode = result.data?.getStringExtra(QrScannerActivity.EXTRA_SCAN_RESULT).orEmpty()
             if (scannedCode.isNotBlank()) {
                 val match = allRoomProducts.find { it.sku.equals(scannedCode, ignoreCase = true) }
-                    ?: InMemoryStore.products.find { it.sku.equals(scannedCode, ignoreCase = true) }
                 if (match != null) {
                     promptSelectProductVariant(match)
                     Toast.makeText(requireContext(), "Escaneado: ${match.name}", Toast.LENGTH_SHORT).show()
@@ -151,7 +153,9 @@ class PosFragment : Fragment() {
             val db = AppDatabase.getInstance(ctx)
             DatabaseSeeder.seedIfEmpty(db)
 
-            db.productDao().getAllProductsWithVariantsFlow().collect { roomWithVariants ->
+            val businessId = UserPreferences(ctx).businessIdFlow.first() ?: "DEFAULT_BUSINESS"
+
+            db.productDao().getProductsByBusinessFlow(businessId).collect { roomWithVariants ->
                 allRoomProducts.clear()
                 val mapped = roomWithVariants.map { item ->
                     Product(
@@ -174,7 +178,7 @@ class PosFragment : Fragment() {
                     )
                 }
 
-                allRoomProducts.addAll(if (mapped.isNotEmpty()) mapped else InMemoryStore.products)
+                allRoomProducts.addAll(mapped)
                 filterCatalog(etSearch.text?.toString().orEmpty())
             }
         }
@@ -210,7 +214,7 @@ class PosFragment : Fragment() {
 
     private fun filterCatalog(query: String) {
         val q = query.trim().lowercase()
-        val sourceList = if (allRoomProducts.isNotEmpty()) allRoomProducts else InMemoryStore.products
+        val sourceList = allRoomProducts
 
         visibleProducts.clear()
         if (q.isEmpty()) {
@@ -321,21 +325,46 @@ class PosFragment : Fragment() {
     }
 
     private fun openClientPicker(allowConsumerFinal: Boolean) {
-        val picker = ClientPickerSheet.newInstance(InMemoryStore.clients, allowConsumerFinal)
-        picker.onClientSelected = { client ->
-            selectedClient = client
-            updateClientDisplay()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val db = AppDatabase.getInstance(requireContext())
+            val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                ?: return@launch
+            val entities = db.clientSupplierDao().getAllClientsFlow(businessId).firstOrNull().orEmpty()
+            val clients = entities.map { entity ->
+                val uiId = entity.id.hashCode().toLong()
+                clientIdsByUiId[uiId] = entity.id
+                Client(uiId, entity.name, entity.phone, entity.info, entity.debtCents / 100.0)
+            }
+            val picker = ClientPickerSheet.newInstance(clients, allowConsumerFinal)
+            picker.onClientSelected = { client ->
+                selectedClient = client
+                updateClientDisplay()
+            }
+            picker.onCreateNewClientRequested = {
+                openNewClientForm()
+            }
+            picker.show(childFragmentManager, ClientPickerSheet.TAG)
         }
-        picker.onCreateNewClientRequested = {
-            openNewClientForm()
-        }
-        picker.show(childFragmentManager, ClientPickerSheet.TAG)
     }
 
     private fun openNewClientForm() {
         val formSheet = ClientFormSheet.newInstance(null)
         formSheet.onClientSaved = { newClient ->
-            InMemoryStore.saveClient(newClient)
+            val entityId = UUID.randomUUID().toString()
+            viewLifecycleOwner.lifecycleScope.launch {
+                AppDatabase.getInstance(requireContext()).clientSupplierDao().insertClient(
+                    ClientEntity(
+                        id = entityId,
+                        businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                            ?: return@launch,
+                        name = newClient.name,
+                        phone = newClient.phone,
+                        info = newClient.info,
+                        debtCents = newClient.debt.toCentsLong()
+                    )
+                )
+            }
+            clientIdsByUiId[newClient.id] = entityId
             selectedClient = newClient
             updateClientDisplay()
         }
@@ -389,6 +418,10 @@ class PosFragment : Fragment() {
             lifecycleScope.launch {
                 try {
                     val db = AppDatabase.getInstance(requireContext())
+                    val preferences = UserPreferences(requireContext())
+                    val businessId = preferences.businessIdFlow.first()
+                        ?: throw IllegalStateException("No hay un negocio activo")
+                    val userId = preferences.userIdFlow.first().orEmpty()
                     val activeShift = db.cashDao().getActiveShiftFlow().firstOrNull()
 
                     val saleId = UUID.randomUUID().toString()
@@ -396,8 +429,12 @@ class PosFragment : Fragment() {
 
                     val saleEntity = SaleEntity(
                         id = saleId,
+                        businessId = businessId,
+                        userId = userId,
                         saleNumber = saleNum,
-                        clientId = selectedClient?.id?.toString(),
+                        clientId = selectedClient?.let {
+                            clientIdsByUiId[it.id] ?: it.id.toString()
+                        },
                         paymentMethod = selectedPaymentMethod.name,
                         transferReference = transferRef,
                         totalCents = totalCents
@@ -428,6 +465,8 @@ class PosFragment : Fragment() {
                         payments = listOf(paymentEntity),
                         activeShiftId = activeShift?.id
                     )
+
+                    com.example.dajho.data.sync.SyncManager.triggerImmediateSync(requireContext())
 
                     // Descontar stock local
                     cartItems.forEach { cartItem ->

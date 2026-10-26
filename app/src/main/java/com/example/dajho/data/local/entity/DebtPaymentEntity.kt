@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Abonos/Pagos de Deudas a Clientes o Proveedores (Fase 3 - RN-08).
+ * Entidad Room para Abonos de Deuda (Tabla "abonos_deuda").
  */
-@Entity(tableName = "debt_payments")
+@Entity(tableName = "abonos_deuda")
 data class DebtPaymentEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

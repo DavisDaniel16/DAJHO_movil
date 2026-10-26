@@ -35,8 +35,6 @@ class ClientListActivity : AppCompatActivity() {
         val btnNewClient: View = findViewById(R.id.btnNewClient)
         val btnBack: ImageView = findViewById(R.id.btnBackClients)
 
-        loadSeedData()
-
         adapter = ClientAdapter(visibleClients) { client ->
             showClientForm(client)
         }
@@ -56,38 +54,6 @@ class ClientListActivity : AppCompatActivity() {
                 filterClients(s?.toString().orEmpty())
             }
         })
-    }
-
-    private fun loadSeedData() {
-        clientList.clear()
-        clientList.add(
-            Client(
-                id = 1L,
-                name = "María Fernanda López",
-                phone = "099 123 4567",
-                info = "Centro de Guayaquil",
-                debt = 0.00
-            )
-        )
-        clientList.add(
-            Client(
-                id = 2L,
-                name = "Carlos Alberto Mendoza",
-                phone = "098 765 4321",
-                info = "carlos.mendoza@gmail.com",
-                debt = 28.50
-            )
-        )
-        clientList.add(
-            Client(
-                id = 3L,
-                name = "Lucía Beatriz Ramos",
-                phone = "096 987 6543",
-                info = "Mercado Central",
-                debt = 15.00
-            )
-        )
-        filterClients(etSearch.text?.toString().orEmpty())
     }
 
     private fun filterClients(query: String) {

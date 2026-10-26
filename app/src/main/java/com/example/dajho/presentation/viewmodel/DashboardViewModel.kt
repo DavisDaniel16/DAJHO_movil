@@ -15,8 +15,8 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 data class DashboardUiState(
-    val userName: String = "Propietario",
-    val businessName: String = "Caja DAJHO",
+    val userName: String = "",
+    val businessName: String = "",
     val todaySalesCents: Long = 0L,
     val todayBalanceCents: Long = 0L,
     val todayExpensesCents: Long = 0L,
@@ -24,7 +24,7 @@ data class DashboardUiState(
     val debtorsCount: Int = 0,
     val totalDebtCents: Long = 0L,
     val isCashOpen: Boolean = false,
-    val topProductName: String = "Camiseta Polo"
+    val topProductName: String = ""
 )
 
 /**
@@ -44,7 +44,7 @@ class DashboardViewModel(
     fun loadDashboardData(targetCalendar: Calendar = Calendar.getInstance()) {
         viewModelScope.launch {
             try {
-                val userName = userPreferences.userNameFlow.first()
+                val userName = userPreferences.userNameFlow.first().orEmpty()
                 val activeShift = cashDao.getActiveShiftFlow().firstOrNull()
 
                 val calStart = (targetCalendar.clone() as Calendar).apply {
@@ -67,7 +67,7 @@ class DashboardViewModel(
 
                 _uiState.value = DashboardUiState(
                     userName = userName,
-                    businessName = "Caja DAJHO",
+                    businessName = "",
                     todaySalesCents = salesCents,
                     todayBalanceCents = salesCents,
                     todayExpensesCents = 0L,
@@ -75,7 +75,7 @@ class DashboardViewModel(
                     debtorsCount = debtors,
                     totalDebtCents = totalDebt,
                     isCashOpen = (activeShift != null && activeShift.isOpen),
-                    topProductName = if (salesCents > 0) "Camiseta Polo" else "Registra ventas para ver tu producto estrella"
+                    topProductName = if (salesCents > 0) "Consulta el detalle de ventas" else "Registra ventas para ver tu producto estrella"
                 )
             } catch (e: Exception) {
                 e.printStackTrace()

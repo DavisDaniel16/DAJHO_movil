@@ -5,15 +5,15 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Cola de Operaciones Pendientes de Sincronización Offline (Fase 13).
+ * Entidad Room para Operaciones de Sincronización (Tabla "operaciones_sincronizacion").
  */
-@Entity(tableName = "sync_operations")
+@Entity(tableName = "operaciones_sincronizacion")
 data class SyncOperationEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val entityName: String, // products, clients, sales, expenses, etc.
+    val entityName: String,
     val entityId: String,
-    val operation: String, // INSERT, UPDATE, DELETE
+    val operation: String,
     val payloadJson: String,
     val attempts: Int = 0,
     val lastError: String? = null,

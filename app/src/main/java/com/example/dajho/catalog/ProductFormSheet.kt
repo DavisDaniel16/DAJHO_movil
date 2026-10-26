@@ -22,8 +22,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
-import com.example.dajho.data.InMemoryStore
 import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.datastore.UserPreferences
 import com.example.dajho.data.local.entity.LocalImageEntity
 import com.example.dajho.data.local.entity.ProductEntity
 import com.example.dajho.data.local.entity.ProductVariantEntity
@@ -31,6 +31,7 @@ import com.example.dajho.data.local.entity.SyncStatus
 import com.example.dajho.util.toCentsLong
 import com.example.dajho.util.toCurrencyString
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
@@ -252,9 +253,16 @@ class ProductFormSheet : BottomSheetDialogFragment() {
 
                 val costCents = costStr.toCentsLong()
                 val priceCents = priceStr.toCentsLong()
+                val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                    ?: run {
+                        Toast.makeText(requireContext(), "No hay un negocio activo", Toast.LENGTH_LONG).show()
+                        return@launch
+                    }
+                android.util.Log.d("DEBUG_FORM", "businessId al guardar producto: $businessId")
 
                 val productEntity = ProductEntity(
                     id = currentProductId,
+                    businessId = businessId,
                     sku = sku,
                     name = name,
                     brand = brand.ifEmpty { "DAJHO" },
@@ -275,19 +283,22 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                     )
                 }
 
-                if (!selectedLocalImagePath.isNullOrBlank()) {
-                    val localImage = LocalImageEntity(
+                val productRepo = com.example.dajho.data.repository.ProductRepositoryImpl(
+                    db.productDao(),
+                    db.syncOperationDao(),
+                    db.localImageDao()
+                )
+                val localImage = if (!selectedLocalImagePath.isNullOrBlank()) {
+                    LocalImageEntity(
                         localFilePath = selectedLocalImagePath!!,
                         remoteStoragePath = "products/$currentProductId.jpg",
                         entityType = "PRODUCT",
                         entityId = currentProductId
                     )
-                    db.localImageDao().insertImage(localImage)
-                }
+                } else null
 
-                db.productDao().insertProduct(productEntity)
-                db.productDao().deleteVariantsByProductId(currentProductId)
-                db.productDao().insertVariants(variantEntities)
+                productRepo.saveProductWithImage(productEntity, variantEntities, localImage)
+                com.example.dajho.data.sync.SyncManager.triggerImmediateSync(requireContext())
 
                 val savedProduct = Product(
                     id = currentProductId,
@@ -301,7 +312,6 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                     variants = validVariants.toMutableList()
                 )
 
-                InMemoryStore.saveProduct(savedProduct)
                 onProductSaved?.invoke(savedProduct)
                 Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
                 dismiss()

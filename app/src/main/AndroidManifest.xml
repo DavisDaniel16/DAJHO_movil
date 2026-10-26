@@ -40,6 +40,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".BusinessSetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".HomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
@@ -55,6 +59,9 @@
             android:exported="false" />
         <activity
             android:name=".profile.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SystemAdminDashboardActivity"
             android:exported="false" />
     </application>
 

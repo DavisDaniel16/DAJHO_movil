@@ -84,20 +84,22 @@ class HomeDashboardFragment : Fragment() {
         refreshRealDashboardData()
     }
 
-    private fun refreshRealDashboardData() {
+    fun selectDate(calendar: Calendar) {
+        refreshRealDashboardData(calendar)
+    }
+
+    private fun refreshRealDashboardData(targetCalendar: Calendar = Calendar.getInstance()) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val ctx = context ?: return@launch
                 val db = AppDatabase.getInstance(ctx)
-                DatabaseSeeder.seedIfEmpty(db)
-
-                val calStart = Calendar.getInstance().apply {
+                val calStart = (targetCalendar.clone() as Calendar).apply {
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
                 }
-                val calEnd = Calendar.getInstance().apply {
+                val calEnd = (targetCalendar.clone() as Calendar).apply {
                     set(Calendar.HOUR_OF_DAY, 23)
                     set(Calendar.MINUTE, 59)
                     set(Calendar.SECOND, 59)

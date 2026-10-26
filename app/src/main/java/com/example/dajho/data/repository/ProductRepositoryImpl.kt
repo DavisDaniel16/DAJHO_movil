@@ -10,6 +10,7 @@ import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.data.local.relation.ProductWithVariants
 import com.example.dajho.domain.repository.ProductRepository
 import kotlinx.coroutines.flow.Flow
+import org.json.JSONObject
 
 /**
  * Implementación del Repositorio de Productos respaldado por Room y Cola Sync (Fase 6).
@@ -47,9 +48,36 @@ class ProductRepositoryImpl(
                 entityName = "products",
                 entityId = product.id,
                 operation = "INSERT",
-                payloadJson = "{\"sku\":\"${product.sku}\",\"name\":\"${product.name}\"}"
+                payloadJson = JSONObject().apply {
+                    put("id", product.id)
+                    put("negocio_id", product.businessId)
+                    put("sku", product.sku)
+                    put("nombre", product.name)
+                    put("marca", product.brand)
+                    put("categoria", product.category)
+                    put("costo_centavos", product.costCents)
+                    put("precio_venta_centavos", product.salePriceCents)
+                    put("uri_imagen", product.imageUri ?: JSONObject.NULL)
+                }.toString()
             )
         )
+
+        for (v in variants) {
+            syncDao.insertOperation(
+                SyncOperationEntity(
+                    entityName = "product_variants",
+                    entityId = v.id,
+                    operation = "INSERT",
+                    payloadJson = JSONObject().apply {
+                        put("id", v.id)
+                        put("producto_id", v.productId)
+                        put("talla", v.size)
+                        put("color", v.color)
+                        put("stock", v.stock)
+                    }.toString()
+                )
+            )
+        }
     }
 
     override suspend fun softDeleteProduct(productId: String) {
@@ -59,7 +87,9 @@ class ProductRepositoryImpl(
                 entityName = "products",
                 entityId = productId,
                 operation = "DELETE",
-                payloadJson = "{\"deletedAt\":${System.currentTimeMillis()}}"
+                payloadJson = JSONObject().apply {
+                    put("deletedAt", System.currentTimeMillis())
+                }.toString()
             )
         )
     }

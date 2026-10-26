@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.datastore.UserPreferences
 import com.example.dajho.data.repository.AuthRepositoryImpl
-import com.example.dajho.util.PasswordUtils
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -33,11 +32,21 @@ class LoginActivity : AppCompatActivity() {
         // 1. Restauración de sesión al abrir la app
         lifecycleScope.launch {
             val isLoggedIn = userPreferences.isLoggedInFlow.first()
-            if (isLoggedIn) {
-                navigateToHome()
-                finish()
-                return@launch
+            val hasToken = !userPreferences.accessTokenFlow.first().isNullOrBlank()
+            val hasBusiness = !userPreferences.businessIdFlow.first().isNullOrBlank()
+            val email = userPreferences.userEmailFlow.first()
+            if (isLoggedIn && hasToken) {
+                if (email.equals("dajho1617@gmail.com", ignoreCase = true)) {
+                    startActivity(Intent(this@LoginActivity, SystemAdminDashboardActivity::class.java))
+                    finish()
+                    return@launch
+                } else if (hasBusiness) {
+                    navigateToHome()
+                    finish()
+                    return@launch
+                }
             }
+            if (isLoggedIn) userPreferences.clearSession()
         }
 
         val btnBack = findViewById<ImageView>(R.id.btnBack)
@@ -61,7 +70,22 @@ class LoginActivity : AppCompatActivity() {
         }
 
         tvForgotPassword?.setOnClickListener {
-            Toast.makeText(this, "Enlace de recuperación enviado a tu correo", Toast.LENGTH_SHORT).show()
+            val email = etEmail?.text?.toString()?.trim().orEmpty()
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                etEmail?.error = "Ingresa un correo válido"
+                return@setOnClickListener
+            }
+            lifecycleScope.launch {
+                val db = AppDatabase.getInstance(this@LoginActivity)
+                val result = AuthRepositoryImpl(
+                    db.userProfileDao(), db.businessDao(), db.syncOperationDao(), userPreferences
+                ).requestPasswordReset(email)
+                result.onSuccess {
+                    Toast.makeText(this@LoginActivity, "Revisa tu correo para restablecer la contraseña", Toast.LENGTH_LONG).show()
+                }.onFailure {
+                    Toast.makeText(this@LoginActivity, it.message ?: "No se pudo enviar el correo", Toast.LENGTH_LONG).show()
+                }
+            }
         }
 
         btnLogin?.setOnClickListener {
@@ -78,6 +102,14 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Acceso directo para Administrador Global
+            if (email.equals("dajho1617@gmail.com", ignoreCase = true)) {
+                if (password != "/852456Zx@@") {
+                    Toast.makeText(this, "Contraseña de administrador incorrecta", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+            }
+
             lifecycleScope.launch {
                 val db = AppDatabase.getInstance(this@LoginActivity)
                 val authRepo = AuthRepositoryImpl(
@@ -87,26 +119,36 @@ class LoginActivity : AppCompatActivity() {
                     userPreferences
                 )
 
-                val passHash = PasswordUtils.hashPassword(password)
-                val result = authRepo.loginLocalUser(email, passHash)
+                val result = authRepo.loginLocalUser(email, password)
 
                 result.fold(
                     onSuccess = { user ->
-                        Toast.makeText(this@LoginActivity, "¡Bienvenido de nuevo, ${user.fullName}!", Toast.LENGTH_SHORT).show()
-                        navigateToHome()
-                        finish()
+                        if (email.equals("dajho1617@gmail.com", ignoreCase = true)) {
+                            Toast.makeText(this@LoginActivity, "¡Bienvenido, Administrador Global!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this@LoginActivity, SystemAdminDashboardActivity::class.java))
+                            finish()
+                        } else {
+                            Toast.makeText(this@LoginActivity, "¡Bienvenido de nuevo, ${user.fullName}!", Toast.LENGTH_SHORT).show()
+                            navigateToHome()
+                            finish()
+                        }
                     },
-                    onFailure = {
-                        // Si es primera vez y no hay usuario local, permite login de prueba guardando la sesión
-                        userPreferences.saveSession(
-                            userId = "USER_LOCAL",
-                            userName = email.substringBefore("@"),
-                            email = email,
-                            businessId = "DEFAULT_BUSINESS"
-                        )
-                        Toast.makeText(this@LoginActivity, "¡Bienvenido de nuevo!", Toast.LENGTH_SHORT).show()
-                        navigateToHome()
-                        finish()
+                    onFailure = { ex ->
+                        if (email.equals("dajho1617@gmail.com", ignoreCase = true)) {
+                            Toast.makeText(this@LoginActivity, "¡Bienvenido, Administrador Global!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this@LoginActivity, SystemAdminDashboardActivity::class.java))
+                            finish()
+                        } else if (ex.message == "SETUP_REQUIRED") {
+                            startActivity(
+                                Intent(this@LoginActivity, BusinessSetupActivity::class.java)
+                            )
+                        } else {
+                            Toast.makeText(
+                                this@LoginActivity,
+                                ex.message ?: "No se pudo iniciar sesión",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
                 )
             }

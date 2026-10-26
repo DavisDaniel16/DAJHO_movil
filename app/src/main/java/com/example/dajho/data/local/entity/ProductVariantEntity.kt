@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Variantes de Producto (Talla, Color, Stock) (Fase 3).
+ * Entidad Room para Variantes de Producto (Tabla "variantes_producto").
  */
 @Entity(
-    tableName = "product_variants",
+    tableName = "variantes_producto",
     foreignKeys = [
         ForeignKey(
             entity = ProductEntity::class,

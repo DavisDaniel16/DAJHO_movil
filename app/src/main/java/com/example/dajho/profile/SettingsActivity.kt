@@ -3,6 +3,7 @@ package com.example.dajho.profile
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +13,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.dajho.R
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.backup.BackupManager
+import com.example.dajho.data.local.datastore.UserPreferences
+import com.example.dajho.data.repository.AuthRepositoryImpl
 import com.example.dajho.data.sync.SyncManager
 import kotlinx.coroutines.launch
 import java.io.File
@@ -33,6 +36,26 @@ class SettingsActivity : AppCompatActivity() {
 
         val btnBack = findViewById<ImageButton>(R.id.btnBackSettings)
         btnBack?.setOnClickListener { finish() }
+
+        val cardTestConnection = findViewById<View>(R.id.cardTestConnection)
+        cardTestConnection?.setOnClickListener {
+            Toast.makeText(this, "Probando conexión con Supabase... Revisa el Logcat", Toast.LENGTH_LONG).show()
+            lifecycleScope.launch {
+                try {
+                    val db = AppDatabase.getInstance(this@SettingsActivity)
+                    val authRepo = AuthRepositoryImpl(
+                        db.userProfileDao(),
+                        db.businessDao(),
+                        db.syncOperationDao(),
+                        UserPreferences(this@SettingsActivity)
+                    )
+                    authRepo.probarConexionSupabase()
+                    Toast.makeText(this@SettingsActivity, "Prueba ejecutada. Revisa Logcat (TAG: AuthRepository)", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this@SettingsActivity, "Error en la prueba: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun processBackupImportUri(uri: Uri) {

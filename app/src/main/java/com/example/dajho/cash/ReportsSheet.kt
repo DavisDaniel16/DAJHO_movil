@@ -17,8 +17,10 @@ import com.example.dajho.R
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.reports.CsvReportGenerator
 import com.example.dajho.reports.PdfReportGenerator
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.example.dajho.data.local.datastore.UserPreferences
 import java.io.File
 
 /**
@@ -67,6 +69,8 @@ class ReportsSheet : BottomSheetDialogFragment() {
             try {
                 val ctx = context ?: return@launch
                 val db = AppDatabase.getInstance(ctx)
+                val businessId = UserPreferences(ctx).businessIdFlow.first()
+                    ?: throw IllegalStateException("No hay un negocio activo")
 
                 val reportFile: File = when (selectedReportType) {
                     ReportType.SALES -> {
@@ -86,7 +90,7 @@ class ReportsSheet : BottomSheetDialogFragment() {
                         }
                     }
                     ReportType.DEBTORS -> {
-                        val debtors = db.clientSupplierDao().getAllClientsFlow("DEFAULT_BUSINESS").firstOrNull() ?: emptyList()
+                        val debtors = db.clientSupplierDao().getAllClientsFlow(businessId).firstOrNull() ?: emptyList()
                         val pendingDebtors = debtors.filter { it.debtCents > 0 }
                         if (isPdf) {
                             PdfReportGenerator.generateDebtorsPdf(ctx, pendingDebtors)
@@ -95,7 +99,7 @@ class ReportsSheet : BottomSheetDialogFragment() {
                         }
                     }
                     ReportType.EXPENSES -> {
-                        val expenses = db.expenseDao().getAllExpensesFlow("DEFAULT_BUSINESS").firstOrNull() ?: emptyList()
+                        val expenses = db.expenseDao().getAllExpensesFlow(businessId).firstOrNull() ?: emptyList()
                         if (isPdf) {
                             PdfReportGenerator.generateSalesPdf(ctx, "Reporte de Gastos", emptyList())
                         } else {

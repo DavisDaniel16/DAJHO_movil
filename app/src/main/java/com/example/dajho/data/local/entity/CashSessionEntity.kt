@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Arqueo y Turnos de Caja (Fase 3).
+ * Entidad Room para Sesiones de Caja (Tabla "sesiones_caja").
  */
-@Entity(tableName = "cash_sessions")
+@Entity(tableName = "sesiones_caja")
 data class CashSessionEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

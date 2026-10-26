@@ -30,8 +30,9 @@ class InventoryAdapter(
     override fun getItemCount(): Int = products.size
 
     fun updateData(newProducts: List<Product>) {
+        val listCopy = newProducts.toList()
         products.clear()
-        products.addAll(newProducts)
+        products.addAll(listCopy)
         notifyDataSetChanged()
     }
 

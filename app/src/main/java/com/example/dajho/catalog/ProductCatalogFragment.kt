@@ -12,9 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
-import com.example.dajho.data.InMemoryStore
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.DatabaseSeeder
+import com.example.dajho.data.local.datastore.UserPreferences
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -28,6 +29,7 @@ class ProductCatalogFragment : Fragment() {
 
     private lateinit var etSearch: EditText
     private lateinit var llEmpty: View
+    private lateinit var rvProducts: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,7 +44,7 @@ class ProductCatalogFragment : Fragment() {
 
         etSearch = view.findViewById(R.id.etSearchProduct)
         llEmpty = view.findViewById(R.id.llEmptyCatalog)
-        val rvProducts: RecyclerView = view.findViewById(R.id.rvProducts)
+        rvProducts = view.findViewById(R.id.rvProducts)
         val btnNewProduct: View = view.findViewById(R.id.btnNewProduct)
 
         adapter = InventoryAdapter(visibleProducts) { product ->
@@ -72,7 +74,11 @@ class ProductCatalogFragment : Fragment() {
             val db = AppDatabase.getInstance(ctx)
             DatabaseSeeder.seedIfEmpty(db)
 
-            db.productDao().getAllProductsWithVariantsFlow().collect { roomWithVariants ->
+            val businessId = UserPreferences(ctx).businessIdFlow.first() ?: "DEFAULT_BUSINESS"
+            android.util.Log.d("DEBUG_INV", "businessId actual: $businessId")
+
+            db.productDao().getProductsByBusinessFlow(businessId).collect { roomWithVariants ->
+                android.util.Log.d("DEBUG_INV", "Productos recibidos del Flow: ${roomWithVariants.size}")
                 allRoomProducts.clear()
                 val mapped = roomWithVariants.map { item ->
                     Product(
@@ -95,7 +101,7 @@ class ProductCatalogFragment : Fragment() {
                     )
                 }
 
-                allRoomProducts.addAll(if (mapped.isNotEmpty()) mapped else InMemoryStore.products)
+                allRoomProducts.addAll(mapped)
                 updateProductList(etSearch.text?.toString().orEmpty())
             }
         }
@@ -105,7 +111,7 @@ class ProductCatalogFragment : Fragment() {
         val q = query.trim().lowercase()
         visibleProducts.clear()
 
-        val sourceList = if (allRoomProducts.isNotEmpty()) allRoomProducts else InMemoryStore.products
+        val sourceList = allRoomProducts
 
         if (q.isEmpty()) {
             visibleProducts.addAll(sourceList)
@@ -121,14 +127,16 @@ class ProductCatalogFragment : Fragment() {
 
         if (::adapter.isInitialized) {
             adapter.updateData(visibleProducts)
-            llEmpty.visibility = if (visibleProducts.isEmpty()) View.VISIBLE else View.GONE
+            val isEmpty = visibleProducts.isEmpty()
+            llEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
+            rvProducts.visibility = if (isEmpty) View.GONE else View.VISIBLE
         }
     }
 
     private fun showProductForm(product: Product?) {
         val sheet = ProductFormSheet.newInstance(product)
         sheet.onProductSaved = {
-            updateProductList(etSearch.text?.toString().orEmpty())
+            // Room Flow collects and updates automatically
         }
         sheet.show(childFragmentManager, ProductFormSheet.TAG)
     }

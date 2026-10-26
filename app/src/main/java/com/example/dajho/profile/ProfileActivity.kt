@@ -46,7 +46,7 @@ class ProfileActivity : AppCompatActivity() {
             val userName = userPreferences.userNameFlow.first()
             val userEmail = userPreferences.userEmailFlow.first()
             tvUserName?.text = userName
-            tvUserPhone?.text = userEmail ?: "0986627675"
+            tvUserPhone?.text = userEmail.orEmpty()
         }
 
         cardEditProfile?.setOnClickListener {

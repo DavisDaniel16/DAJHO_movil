@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Perfiles de Usuario / Empleados (Fase 3).
+ * Entidad Room para Perfiles de Usuario (Tabla "perfiles").
  */
-@Entity(tableName = "user_profiles")
+@Entity(tableName = "perfiles")
 data class UserProfileEntity(
     @PrimaryKey
     val userId: String = UUID.randomUUID().toString(),
@@ -15,7 +15,7 @@ data class UserProfileEntity(
     val fullName: String,
     val email: String,
     val phone: String = "",
-    val role: String = "PROPIETARIO", // PROPIETARIO, CAJERO, VENDEDOR
+    val role: String = "PROPIETARIO",
     val syncStatus: SyncStatus = SyncStatus.PENDING_INSERT,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

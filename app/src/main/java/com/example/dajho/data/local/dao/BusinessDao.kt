@@ -6,13 +6,10 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.dajho.data.local.entity.BusinessEntity
 
-/**
- * DAO Room para Comercio / Negocio (Fase 3).
- */
 @Dao
 interface BusinessDao {
 
-    @Query("SELECT * FROM businesses WHERE id = :businessId")
+    @Query("SELECT * FROM negocios WHERE id = :businessId")
     suspend fun getBusinessById(businessId: String): BusinessEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

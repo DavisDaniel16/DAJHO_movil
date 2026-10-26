@@ -3,7 +3,6 @@ package com.example.dajho.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dajho.domain.repository.AuthRepository
-import com.example.dajho.util.PasswordUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -63,13 +62,12 @@ class AuthViewModel(
         _uiState.value = AuthUiState.Loading
 
         viewModelScope.launch {
-            val passHash = PasswordUtils.hashPassword(passwordRaw)
             val result = authRepository.registerLocalUser(
                 fullName = fullName,
                 email = email,
                 phone = phone,
                 businessName = businessName,
-                passwordHash = passHash
+                passwordHash = passwordRaw
             )
 
             result.fold(
@@ -92,8 +90,7 @@ class AuthViewModel(
         _uiState.value = AuthUiState.Loading
 
         viewModelScope.launch {
-            val passHash = PasswordUtils.hashPassword(passwordRaw)
-            val result = authRepository.loginLocalUser(email, passHash)
+            val result = authRepository.loginLocalUser(email, passwordRaw)
 
             result.fold(
                 onSuccess = {

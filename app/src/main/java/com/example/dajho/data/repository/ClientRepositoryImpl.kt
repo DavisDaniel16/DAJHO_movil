@@ -8,6 +8,7 @@ import com.example.dajho.data.local.entity.SupplierEntity
 import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.domain.repository.ClientRepository
 import kotlinx.coroutines.flow.Flow
+import org.json.JSONObject
 
 /**
  * Implementación del Repositorio de Clientes y Proveedores con Room y Transacción de Abonos (Fase 8).
@@ -33,7 +34,14 @@ class ClientRepositoryImpl(
                 entityName = "clients",
                 entityId = client.id,
                 operation = "INSERT",
-                payloadJson = "{\"name\":\"${client.name}\"}"
+                payloadJson = JSONObject().apply {
+                    put("id", client.id)
+                    put("negocio_id", client.businessId)
+                    put("nombre", client.name)
+                    put("telefono", client.phone)
+                    put("info", client.info)
+                    put("deuda_centavos", client.debtCents)
+                }.toString()
             )
         )
     }
@@ -45,7 +53,14 @@ class ClientRepositoryImpl(
                 entityName = "suppliers",
                 entityId = supplier.id,
                 operation = "INSERT",
-                payloadJson = "{\"name\":\"${supplier.name}\"}"
+                payloadJson = JSONObject().apply {
+                    put("id", supplier.id)
+                    put("negocio_id", supplier.businessId)
+                    put("nombre", supplier.name)
+                    put("telefono", supplier.phone)
+                    put("info", supplier.info)
+                    put("deuda_centavos", supplier.debtCents)
+                }.toString()
             )
         )
     }
