@@ -6,28 +6,47 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
-import com.example.dajho.clients.Client
-import java.util.Locale
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.entity.CashSessionEntity
+import com.example.dajho.util.toCentsLong
+import com.example.dajho.util.toCurrencyString
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 /**
- * Módulo de Caja y Deudas (Fase 4).
- * Cuadre de caja (Apertura, Ventas, Abonos, Arqueo/Cierre) y Cuentas por Cobrar.
+ * Módulo de Balance, Caja y Arqueo 100% Conectado a Room (Fase 9).
  */
 class CashDebtFragment : Fragment() {
 
-    private var isCashOpen = true
-    private var initialCash = 20.00
-    private var cashSales = 25.00
-    private var collectedDebts = 15.00
+    private enum class CashTab { INGRESOS, EGRESOS }
+    private var currentTab = CashTab.INGRESOS
 
-    private val debtorsList = mutableListOf<Client>()
-    private lateinit var debtorAdapter: DebtorAdapter
+    private var activeShift: CashSessionEntity? = null
+    private var isCashOpen = false
 
+    private var initialCashCents = 0L
+    private var cashSalesCents = 0L
+    private var collectedDebtsCents = 0L
+    private var totalExpensesCents = 0L
+
+    private val incomeList = mutableListOf<CashTransaction>()
+    private val expenseList = mutableListOf<CashTransaction>()
+    private val visibleTransactions = mutableListOf<CashTransaction>()
+    private lateinit var transactionAdapter: TransactionAdapter
+
+    private lateinit var tvTotalBalance: TextView
+    private lateinit var tvIngresos: TextView
+    private lateinit var tvEgresos: TextView
+    private lateinit var tabIngresos: TextView
+    private lateinit var tabEgresos: TextView
+    private lateinit var tabUnderline: View
     private lateinit var tvStatus: TextView
     private lateinit var llCashDetails: View
     private lateinit var tvInitialCash: TextView
@@ -35,8 +54,8 @@ class CashDebtFragment : Fragment() {
     private lateinit var tvCollectedDebts: TextView
     private lateinit var tvExpectedCash: TextView
     private lateinit var btnToggleCash: Button
-    private lateinit var rvDebtors: RecyclerView
-    private lateinit var tvEmptyDebtors: TextView
+    private lateinit var rvTransactions: RecyclerView
+    private lateinit var tvEmptyTransactions: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +68,12 @@ class CashDebtFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        tvTotalBalance = view.findViewById(R.id.tvTotalBalanceAmount)
+        tvIngresos = view.findViewById(R.id.tvIngresosAmount)
+        tvEgresos = view.findViewById(R.id.tvEgresosAmount)
+        tabIngresos = view.findViewById(R.id.tabIngresos)
+        tabEgresos = view.findViewById(R.id.tabEgresos)
+        tabUnderline = view.findViewById(R.id.tabUnderlineCash)
         tvStatus = view.findViewById(R.id.tvCashRegisterStatus)
         llCashDetails = view.findViewById(R.id.llCashDetails)
         tvInitialCash = view.findViewById(R.id.tvInitialCashAmount)
@@ -56,94 +81,201 @@ class CashDebtFragment : Fragment() {
         tvCollectedDebts = view.findViewById(R.id.tvCollectedDebtsAmount)
         tvExpectedCash = view.findViewById(R.id.tvExpectedCashAmount)
         btnToggleCash = view.findViewById(R.id.btnToggleCash)
-        rvDebtors = view.findViewById(R.id.rvDebtors)
-        tvEmptyDebtors = view.findViewById(R.id.tvEmptyDebtors)
+        rvTransactions = view.findViewById(R.id.rvCashTransactions)
+        tvEmptyTransactions = view.findViewById(R.id.tvEmptyTransactions)
 
-        loadSeedData()
-        setupDebtorsList()
+        transactionAdapter = TransactionAdapter(visibleTransactions)
+        rvTransactions.layoutManager = LinearLayoutManager(requireContext())
+        rvTransactions.adapter = transactionAdapter
+
         setupCashControls()
+        setupSubTabs()
+        setupActionLinks(view)
+        setupFloatingButtons(view)
+        selectSubTab(CashTab.INGRESOS)
+        observeRoomCashData()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        observeRoomCashData()
+    }
+
+    private fun observeRoomCashData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ctx = context ?: return@launch
+            val db = AppDatabase.getInstance(ctx)
+
+            db.cashDao().getActiveShiftFlow().collect { shift ->
+                activeShift = shift
+                isCashOpen = (shift != null && shift.isOpen)
+                initialCashCents = shift?.initialCashCents ?: 0L
+
+                val movements = if (shift != null) {
+                    db.cashDao().getMovementsForSessionFlow(shift.id).firstOrNull() ?: emptyList()
+                } else {
+                    db.cashDao().getAllTransactionsFlow().firstOrNull() ?: emptyList()
+                }
+
+                incomeList.clear()
+                expenseList.clear()
+
+                cashSalesCents = 0L
+                collectedDebtsCents = 0L
+                totalExpensesCents = 0L
+
+                movements.forEach { m ->
+                    val tx = CashTransaction(
+                        id = m.id.hashCode().toLong(),
+                        concept = m.concept,
+                        amount = m.amountCents / 100.0,
+                        timestamp = "Hoy",
+                        isIncome = (m.movementType == "INGRESO"),
+                        category = if (m.movementType == "INGRESO") "Cobro en Efectivo" else "Gasto Operativo"
+                    )
+
+                    if (m.movementType == "INGRESO") {
+                        incomeList.add(tx)
+                        if (m.relatedSaleId != null) {
+                            cashSalesCents += m.amountCents
+                        } else {
+                            collectedDebtsCents += m.amountCents
+                        }
+                    } else {
+                        expenseList.add(tx)
+                        totalExpensesCents += m.amountCents
+                    }
+                }
+
+                filterTransactions()
+            }
+        }
+    }
+
+    private fun setupSubTabs() {
+        tabIngresos.setOnClickListener { selectSubTab(CashTab.INGRESOS) }
+        tabEgresos.setOnClickListener { selectSubTab(CashTab.EGRESOS) }
+    }
+
+    private fun selectSubTab(tab: CashTab) {
+        currentTab = tab
+        val ctx = context ?: return
+
+        val colorActive = ContextCompat.getColor(ctx, R.color.btn_black)
+        val colorInactive = ContextCompat.getColor(ctx, R.color.text_secondary)
+
+        val params = tabUnderline.layoutParams as ConstraintLayout.LayoutParams
+        if (tab == CashTab.INGRESOS) {
+            tabIngresos.setTextColor(colorActive)
+            tabIngresos.setTypeface(null, android.graphics.Typeface.BOLD)
+            tabEgresos.setTextColor(colorInactive)
+            tabEgresos.setTypeface(null, android.graphics.Typeface.NORMAL)
+
+            params.startToStart = R.id.tabHeaderContainerCash
+            params.endToEnd = ConstraintLayout.LayoutParams.UNSET
+        } else {
+            tabIngresos.setTextColor(colorInactive)
+            tabIngresos.setTypeface(null, android.graphics.Typeface.NORMAL)
+            tabEgresos.setTextColor(colorActive)
+            tabEgresos.setTypeface(null, android.graphics.Typeface.BOLD)
+
+            params.startToStart = ConstraintLayout.LayoutParams.UNSET
+            params.endToEnd = R.id.tabHeaderContainerCash
+        }
+        tabUnderline.layoutParams = params
+
+        filterTransactions()
+    }
+
+    private fun filterTransactions() {
+        val targetList = if (currentTab == CashTab.INGRESOS) incomeList else expenseList
+        visibleTransactions.clear()
+        visibleTransactions.addAll(targetList)
+
+        if (::transactionAdapter.isInitialized) {
+            transactionAdapter.updateData(visibleTransactions)
+            if (visibleTransactions.isEmpty()) {
+                tvEmptyTransactions.visibility = View.VISIBLE
+                tvEmptyTransactions.text = if (currentTab == CashTab.INGRESOS) "No tienes ingresos registrados en esta fecha." else "No tienes egresos registrados en esta fecha."
+            } else {
+                tvEmptyTransactions.visibility = View.GONE
+            }
+        }
         updateCashDisplay()
     }
 
-    private fun loadSeedData() {
-        if (debtorsList.isEmpty()) {
-            debtorsList.add(
-                Client(2L, "Carlos Alberto Mendoza", "098 765 4321", "carlos@gmail.com", 28.50)
-            )
-            debtorsList.add(
-                Client(3L, "Lucía Beatriz Ramos", "096 987 6543", "Mercado Central", 15.00)
-            )
+    private fun setupActionLinks(view: View) {
+        val btnDownloadReports = view.findViewById<TextView>(R.id.btnDownloadReports)
+        val btnViewBalanceDetail = view.findViewById<TextView>(R.id.btnViewBalanceDetail)
+
+        btnDownloadReports?.setOnClickListener {
+            val reportsSheet = ReportsSheet()
+            reportsSheet.show(childFragmentManager, ReportsSheet.TAG)
         }
-    }
 
-    private fun setupDebtorsList() {
-        debtorAdapter = DebtorAdapter(debtorsList) { debtor ->
-            val sheet = DebtPaymentSheet.newInstance(debtor)
-            sheet.onPaymentRecorded = { amount ->
-                // Actualizar la deuda del cliente
-                debtor.debt = (debtor.debt - amount).coerceAtLeast(0.0)
-
-                // Si la caja esta abierta, sumar el abono en efectivo a la caja
-                if (isCashOpen) {
-                    collectedDebts += amount
-                    updateCashDisplay()
-                }
-
-                // Filtrar lista para mantener solo clientes con deuda activa
-                updateDebtorsList()
-            }
-            sheet.show(childFragmentManager, DebtPaymentSheet.TAG)
+        btnViewBalanceDetail?.setOnClickListener {
+            val balanceSheet = BalanceDetailSheet()
+            balanceSheet.show(childFragmentManager, BalanceDetailSheet.TAG)
         }
-        rvDebtors.layoutManager = LinearLayoutManager(requireContext())
-        rvDebtors.adapter = debtorAdapter
-        updateDebtorsList()
-    }
-
-    private fun updateDebtorsList() {
-        val activeDebtors = debtorsList.filter { it.debt > 0.001 }
-        debtorAdapter.updateData(activeDebtors)
-        tvEmptyDebtors.visibility = if (activeDebtors.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun setupCashControls() {
         btnToggleCash.setOnClickListener {
-            if (isCashOpen) {
-                // Abrir modal de Cierre de Caja / Arqueo
-                val closeSheet = CashCloseSheet.newInstance(getExpectedCash())
+            if (isCashOpen && activeShift != null) {
+                val closeSheet = CashCloseSheet.newInstance(getExpectedCashCents() / 100.0)
                 closeSheet.onCashClosed = {
-                    isCashOpen = false
-                    updateCashDisplay()
+                    observeRoomCashData()
                 }
                 closeSheet.show(childFragmentManager, CashCloseSheet.TAG)
             } else {
-                // Abrir modal de Apertura de Caja
                 val openSheet = CashOpenSheet()
-                openSheet.onCashOpened = { initial ->
-                    isCashOpen = true
-                    initialCash = initial
-                    cashSales = 0.0
-                    collectedDebts = 0.0
-                    updateCashDisplay()
+                openSheet.onCashOpened = {
+                    observeRoomCashData()
                 }
                 openSheet.show(childFragmentManager, CashOpenSheet.TAG)
             }
         }
     }
 
-    private fun getExpectedCash(): Double = initialCash + cashSales + collectedDebts
+    private fun setupFloatingButtons(view: View) {
+        val btnNewSale = view.findViewById<Button>(R.id.btnNewSaleFloating)
+        val btnNewExpense = view.findViewById<Button>(R.id.btnNewExpenseFloating)
+
+        btnNewSale?.setOnClickListener {
+            activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigation)?.selectedItemId = R.id.nav_sales
+        }
+
+        btnNewExpense?.setOnClickListener {
+            val sheet = NewExpenseSheet()
+            sheet.onExpenseRecorded = {
+                observeRoomCashData()
+            }
+            sheet.show(childFragmentManager, NewExpenseSheet.TAG)
+        }
+    }
+
+    private fun getExpectedCashCents(): Long =
+        initialCashCents + cashSalesCents + collectedDebtsCents - totalExpensesCents
 
     private fun updateCashDisplay() {
-        val ctx = requireContext()
+        val ctx = context ?: return
+        val totalIncomeCents = initialCashCents + cashSalesCents + collectedDebtsCents
+        val netBalanceCents = getExpectedCashCents()
+
+        tvTotalBalance.text = netBalanceCents.toCurrencyString()
+        tvIngresos.text = totalIncomeCents.toCurrencyString()
+        tvEgresos.text = totalExpensesCents.toCurrencyString()
+
         if (isCashOpen) {
             tvStatus.text = getString(R.string.status_cash_open)
             tvStatus.background = ContextCompat.getDrawable(ctx, R.drawable.bg_badge_green)
             tvStatus.setTextColor(ContextCompat.getColor(ctx, R.color.badge_green_text))
 
             llCashDetails.visibility = View.VISIBLE
-            tvInitialCash.text = String.format(Locale.US, "$%.2f", initialCash)
-            tvCashSales.text = String.format(Locale.US, "$%.2f", cashSales)
-            tvCollectedDebts.text = String.format(Locale.US, "$%.2f", collectedDebts)
-            tvExpectedCash.text = String.format(Locale.US, "$%.2f", getExpectedCash())
+            tvInitialCash.text = initialCashCents.toCurrencyString()
+            tvCashSales.text = cashSalesCents.toCurrencyString()
+            tvCollectedDebts.text = collectedDebtsCents.toCurrencyString()
+            tvExpectedCash.text = netBalanceCents.toCurrencyString()
 
             btnToggleCash.text = getString(R.string.btn_close_cash)
         } else {

@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,28 +27,35 @@ import com.example.dajho.catalog.Product
 import com.example.dajho.catalog.ProductAdapter
 import com.example.dajho.clients.Client
 import com.example.dajho.clients.ClientFormSheet
+import com.example.dajho.data.InMemoryStore
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.DatabaseSeeder
+import com.example.dajho.data.local.entity.PaymentEntity
+import com.example.dajho.data.local.entity.SaleEntity
+import com.example.dajho.data.local.entity.SaleItemEntity
+import com.example.dajho.util.toCentsLong
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 /**
- * Módulo de Punto de Venta (POS - Fase 3).
- * Integración de Catálogo Visual Grid (2 columnas) + Escáner QR a pantalla completa (QrScannerActivity) + Carrito + Fiado estricto.
+ * Módulo de Punto de Venta (POS - Fase 7).
+ * Integración con Transacción Atómica SQLite en Room, Escáner QR, Carrito y validaciones estrictas.
  */
 class PosFragment : Fragment() {
 
     private val cartItems = mutableListOf<CartItem>()
     private lateinit var cartAdapter: CartAdapter
 
+    private val allRoomProducts = mutableListOf<Product>()
     private val visibleProducts = mutableListOf<Product>()
     private lateinit var catalogGridAdapter: ProductAdapter
 
     private var selectedPaymentMethod = PaymentMethod.CASH
     private var selectedClient: Client? = null // Default es Consumidor Final (null)
-
-    // Base de datos en memoria para simular el API del POS
-    private val catalogList = mutableListOf<Product>()
-    private val clientsList = mutableListOf<Client>()
 
     private lateinit var etSearch: EditText
     private lateinit var btnScanQr: ImageButton
@@ -72,7 +80,8 @@ class PosFragment : Fragment() {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val scannedCode = result.data?.getStringExtra(QrScannerActivity.EXTRA_SCAN_RESULT).orEmpty()
             if (scannedCode.isNotBlank()) {
-                val match = catalogList.find { it.sku.equals(scannedCode, ignoreCase = true) }
+                val match = allRoomProducts.find { it.sku.equals(scannedCode, ignoreCase = true) }
+                    ?: InMemoryStore.products.find { it.sku.equals(scannedCode, ignoreCase = true) }
                 if (match != null) {
                     promptSelectProductVariant(match)
                     Toast.makeText(requireContext(), "Escaneado: ${match.name}", Toast.LENGTH_SHORT).show()
@@ -125,7 +134,6 @@ class PosFragment : Fragment() {
         tvCartTotalAmount = view.findViewById(R.id.tvCartTotalAmount)
         btnCheckout = view.findViewById(R.id.btnCheckout)
 
-        loadSeedData()
         setupCatalogGrid()
         setupCartList()
         setupSearchTextWatcher()
@@ -133,44 +141,43 @@ class PosFragment : Fragment() {
         setupPaymentMethods()
         setupClientPicker()
         setupCheckout()
+        observeRoomProductsForPos()
         updateCartSummary()
     }
 
-    private fun loadSeedData() {
-        if (catalogList.isEmpty()) {
-            catalogList.add(
-                Product(1L, "CAM-001", "Camiseta Polo Bordada", "DAJHO", "Ropa", 6.50, 12.50, null,
-                    mutableListOf(
-                        com.example.dajho.catalog.ProductVariant(1L, "S", "Negro", 5),
-                        com.example.dajho.catalog.ProductVariant(2L, "M", "Negro", 8),
-                        com.example.dajho.catalog.ProductVariant(3L, "L", "Blanco", 6)
-                    )
-                )
-            )
-            catalogList.add(
-                Product(2L, "ZAP-042", "Zapatilla Deportiva Urbana", "Genérica", "Calzado", 14.00, 25.00, null,
-                    mutableListOf(
-                        com.example.dajho.catalog.ProductVariant(1L, "38", "Blanco", 4),
-                        com.example.dajho.catalog.ProductVariant(2L, "40", "Negro", 7)
-                    )
-                )
-            )
-            catalogList.add(
-                Product(3L, "GOR-009", "Gorra Visera Curva", "Genérica", "Accesorio", 3.20, 7.00, null,
-                    mutableListOf(
-                        com.example.dajho.catalog.ProductVariant(1L, "Única", "Negro", 12)
-                    )
-                )
-            )
-        }
+    private fun observeRoomProductsForPos() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ctx = context ?: return@launch
+            val db = AppDatabase.getInstance(ctx)
+            DatabaseSeeder.seedIfEmpty(db)
 
-        if (clientsList.isEmpty()) {
-            clientsList.add(Client(1L, "María Fernanda López", "099 123 4567", "Centro", 0.0))
-            clientsList.add(Client(2L, "Carlos Alberto Mendoza", "098 765 4321", "carlos@gmail.com", 28.50))
-            clientsList.add(Client(3L, "Lucía Beatriz Ramos", "096 987 6543", "Mercado Central", 15.00))
-        }
+            db.productDao().getAllProductsWithVariantsFlow().collect { roomWithVariants ->
+                allRoomProducts.clear()
+                val mapped = roomWithVariants.map { item ->
+                    Product(
+                        id = item.product.id,
+                        sku = item.product.sku,
+                        name = item.product.name,
+                        brand = item.product.brand,
+                        category = item.product.category,
+                        cost = item.product.costCents / 100.0,
+                        salePrice = item.product.salePriceCents / 100.0,
+                        imageUri = item.product.imageUri,
+                        variants = item.variants.map { v ->
+                            com.example.dajho.catalog.ProductVariant(
+                                id = v.id,
+                                size = v.size,
+                                color = v.color,
+                                stock = v.stock
+                            )
+                        }.toMutableList()
+                    )
+                }
 
-        filterCatalog(etSearch.text?.toString().orEmpty())
+                allRoomProducts.addAll(if (mapped.isNotEmpty()) mapped else InMemoryStore.products)
+                filterCatalog(etSearch.text?.toString().orEmpty())
+            }
+        }
     }
 
     private fun setupCatalogGrid() {
@@ -203,11 +210,13 @@ class PosFragment : Fragment() {
 
     private fun filterCatalog(query: String) {
         val q = query.trim().lowercase()
+        val sourceList = if (allRoomProducts.isNotEmpty()) allRoomProducts else InMemoryStore.products
+
         visibleProducts.clear()
         if (q.isEmpty()) {
-            visibleProducts.addAll(catalogList)
+            visibleProducts.addAll(sourceList)
         } else {
-            visibleProducts.addAll(catalogList.filter {
+            visibleProducts.addAll(sourceList.filter {
                 it.sku.lowercase().contains(q) ||
                     it.name.lowercase().contains(q) ||
                     it.category.lowercase().contains(q)
@@ -259,7 +268,11 @@ class PosFragment : Fragment() {
                 Toast.makeText(requireContext(), "Stock máximo alcanzado", Toast.LENGTH_SHORT).show()
             }
         } else {
-            cartItems.add(CartItem(product, variant, 1))
+            if (variant.stock > 0) {
+                cartItems.add(CartItem(product, variant, 1))
+            } else {
+                Toast.makeText(requireContext(), "Variante sin stock disponible", Toast.LENGTH_SHORT).show()
+            }
         }
         cartAdapter.notifyDataSetChanged()
         updateCartSummary()
@@ -290,10 +303,8 @@ class PosFragment : Fragment() {
         btnPayCredit.background = ContextCompat.getDrawable(requireContext(), if (method == PaymentMethod.CREDIT) bgSelected else bgUnselected)
         btnPayCredit.setTextColor(if (method == PaymentMethod.CREDIT) colorSelected else colorUnselected)
 
-        // Mostrar u ocultar campo de Comprobante de Transferencia
         tilTransferReference.visibility = if (method == PaymentMethod.TRANSFER) View.VISIBLE else View.GONE
 
-        // Regla estricta para Fiado/Crédito: Exige cliente obligatoriamente (no Consumidor Final)
         if (method == PaymentMethod.CREDIT && selectedClient == null) {
             openClientPicker(allowConsumerFinal = false)
         }
@@ -310,7 +321,7 @@ class PosFragment : Fragment() {
     }
 
     private fun openClientPicker(allowConsumerFinal: Boolean) {
-        val picker = ClientPickerSheet.newInstance(clientsList, allowConsumerFinal)
+        val picker = ClientPickerSheet.newInstance(InMemoryStore.clients, allowConsumerFinal)
         picker.onClientSelected = { client ->
             selectedClient = client
             updateClientDisplay()
@@ -324,7 +335,7 @@ class PosFragment : Fragment() {
     private fun openNewClientForm() {
         val formSheet = ClientFormSheet.newInstance(null)
         formSheet.onClientSaved = { newClient ->
-            clientsList.add(newClient)
+            InMemoryStore.saveClient(newClient)
             selectedClient = newClient
             updateClientDisplay()
         }
@@ -349,12 +360,13 @@ class PosFragment : Fragment() {
         btnCheckout.setOnClickListener {
             tilTransferReference.error = null
 
+            // 1. Carrito no vacio
             if (cartItems.isEmpty()) {
                 Toast.makeText(requireContext(), R.string.error_empty_cart, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Validacion de comprobante para Transferencia
+            // 2. Comprobante obligatorio para Transferencia
             var transferRef: String? = null
             if (selectedPaymentMethod == PaymentMethod.TRANSFER) {
                 transferRef = etTransferReference.text?.toString()?.trim().orEmpty()
@@ -364,50 +376,99 @@ class PosFragment : Fragment() {
                 }
             }
 
-            // Validacion de cliente obligatorio para Fiado / Crédito
+            // 3. Cliente obligatorio para Fiado / Crédito
             if (selectedPaymentMethod == PaymentMethod.CREDIT && selectedClient == null) {
                 Toast.makeText(requireContext(), R.string.error_select_client_required, Toast.LENGTH_LONG).show()
                 openClientPicker(allowConsumerFinal = false)
                 return@setOnClickListener
             }
 
-            val total = calculateTotal()
+            val totalDouble = calculateTotal()
+            val totalCents = totalDouble.toCentsLong()
 
-            // Descontar stock
-            cartItems.forEach { cartItem ->
-                cartItem.variant.stock = (cartItem.variant.stock - cartItem.quantity).coerceAtLeast(0)
-            }
+            lifecycleScope.launch {
+                try {
+                    val db = AppDatabase.getInstance(requireContext())
+                    val activeShift = db.cashDao().getActiveShiftFlow().firstOrNull()
 
-            // Si es Fiado, sumar la deuda al cliente
-            if (selectedPaymentMethod == PaymentMethod.CREDIT && selectedClient != null) {
-                selectedClient?.debt = (selectedClient?.debt ?: 0.0) + total
-            }
+                    val saleId = UUID.randomUUID().toString()
+                    val saleNum = String.format(Locale.US, "%06d", (1000..9999).random())
 
-            val format = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.US)
-            val saleRecord = SaleRecord(
-                saleId = String.format(Locale.US, "%06d", (100..999).random()),
-                timestamp = format.format(Date()),
-                items = ArrayList(cartItems),
-                paymentMethod = selectedPaymentMethod,
-                client = selectedClient,
-                transferReference = transferRef,
-                totalAmount = total
-            )
+                    val saleEntity = SaleEntity(
+                        id = saleId,
+                        saleNumber = saleNum,
+                        clientId = selectedClient?.id?.toString(),
+                        paymentMethod = selectedPaymentMethod.name,
+                        transferReference = transferRef,
+                        totalCents = totalCents
+                    )
 
-            // Mostrar Nota de Venta Simple RIMPE
-            val receiptSheet = ReceiptSheet.newInstance(saleRecord)
-            receiptSheet.onClose = {
-                cartItems.clear()
-                cartAdapter.notifyDataSetChanged()
-                etTransferReference.text?.clear()
-                selectedClient = null
-                selectPaymentMethod(PaymentMethod.CASH)
-                updateCartSummary()
-                if (::catalogGridAdapter.isInitialized) {
-                    catalogGridAdapter.notifyDataSetChanged()
+                    val saleItemEntities = cartItems.map { cartItem ->
+                        SaleItemEntity(
+                            saleId = saleId,
+                            productId = cartItem.product.id.toString(),
+                            variantId = cartItem.variant.id.toString(),
+                            quantity = cartItem.quantity,
+                            unitPriceCents = cartItem.product.salePrice.toCentsLong(),
+                            subtotalCents = cartItem.subtotal().toCentsLong()
+                        )
+                    }
+
+                    val paymentEntity = PaymentEntity(
+                        saleId = saleId,
+                        method = selectedPaymentMethod.name,
+                        amountCents = totalCents,
+                        reference = transferRef
+                    )
+
+                    // EJECUCIÓN ATÓMICA EN SQLITE (Fase 7)
+                    db.saleDao().recordCompleteSale(
+                        sale = saleEntity,
+                        items = saleItemEntities,
+                        payments = listOf(paymentEntity),
+                        activeShiftId = activeShift?.id
+                    )
+
+                    // Descontar stock local
+                    cartItems.forEach { cartItem ->
+                        cartItem.variant.stock = (cartItem.variant.stock - cartItem.quantity).coerceAtLeast(0)
+                    }
+
+                    if (selectedPaymentMethod == PaymentMethod.CREDIT && selectedClient != null) {
+                        selectedClient?.debt = (selectedClient?.debt ?: 0.0) + totalDouble
+                    }
+
+                    val format = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.US)
+                    val saleRecord = SaleRecord(
+                        saleId = saleNum,
+                        timestamp = format.format(Date()),
+                        items = ArrayList(cartItems),
+                        paymentMethod = selectedPaymentMethod,
+                        client = selectedClient,
+                        transferReference = transferRef,
+                        totalAmount = totalDouble
+                    )
+
+                    // Mostrar recibo SOLO tras confirmar que se guardó exitosamente
+                    val receiptSheet = ReceiptSheet.newInstance(saleRecord)
+                    receiptSheet.onClose = {
+                        cartItems.clear()
+                        cartAdapter.notifyDataSetChanged()
+                        etTransferReference.text?.clear()
+                        selectedClient = null
+                        selectPaymentMethod(PaymentMethod.CASH)
+                        updateCartSummary()
+                        if (::catalogGridAdapter.isInitialized) {
+                            catalogGridAdapter.notifyDataSetChanged()
+                        }
+                    }
+                    receiptSheet.show(childFragmentManager, ReceiptSheet.TAG)
+
+                } catch (ex: Exception) {
+                    // Si la transacción SQLite falla, NO vacía el carrito ni muestra recibo
+                    Toast.makeText(requireContext(), "Error al guardar venta en base de datos: ${ex.message}", Toast.LENGTH_LONG).show()
                 }
             }
-            receiptSheet.show(childFragmentManager, ReceiptSheet.TAG)
         }
     }
 

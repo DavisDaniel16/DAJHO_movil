@@ -3,25 +3,29 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Brand & Accent Colors -->
-    <color name="purple_primary">#8028F5</color>
+    <!-- Brand & Accent Colors (Treinta Yellow Theme) -->
+    <color name="purple_primary">#FFD100</color>
     <color name="pink_accent">#FF2A85</color>
     <color name="cyan_accent">#00D2FF</color>
+    <color name="brand_yellow">#FFD100</color>
+    <color name="brand_yellow_dark">#E5BB00</color>
 
     <!-- Backgrounds -->
-    <color name="dark_header_bg">#0D0B1A</color>
+    <color name="dark_header_bg">#FFD100</color>
     <color name="card_background">#FFFFFF</color>
     <color name="app_background">#F5F6FA</color>
 
     <!-- UI Elements -->
-    <color name="btn_black">#050505</color>
+    <color name="btn_black">#121826</color>
     <color name="btn_text_color">#FFFFFF</color>
+    <color name="btn_green_action">#0E8A4A</color>
+    <color name="btn_red_action">#8B0000</color>
     <color name="input_border">#E2E4EC</color>
     <color name="input_bg">#FAFAFC</color>
     <color name="text_primary">#1A1A24</color>
     <color name="text_secondary">#7A7A8E</color>
     <color name="text_hint">#A0A0B2</color>
-    <color name="dot_active">#050505</color>
+    <color name="dot_active">#121826</color>
     <color name="dot_inactive">#E0E0EA</color>
     <color name="drag_handle_color">#D5D7E2</color>
 

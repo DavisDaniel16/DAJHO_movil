@@ -37,10 +37,10 @@
       </SelectionState>
       <SelectionState runConfigName="androidTest">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-10-25T17:45:27.120617400Z">
+        <DropdownSelection timestamp="2026-10-25T22:34:57.607789700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\MSI VECTOR 16\.android\avd\Galaxy_S26.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\MSI VECTOR 16\.android\avd\Pixel_6.avd" />
             </handle>
           </Target>
         </DropdownSelection>

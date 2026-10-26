@@ -7,15 +7,12 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
 
 /**
  * Pantalla de Gestion de Catalogo (Fase 1 - solo frontend).
- * Lista, busqueda, creacion y edicion de productos con variantes.
  */
 class ProductCatalogActivity : AppCompatActivity() {
 
@@ -63,7 +60,7 @@ class ProductCatalogActivity : AppCompatActivity() {
         productList.clear()
         productList.add(
             Product(
-                id = 1L,
+                id = "CAM-001-ID",
                 sku = "CAM-001",
                 name = "Camiseta Polo Bordada",
                 brand = "DAJHO",
@@ -71,15 +68,15 @@ class ProductCatalogActivity : AppCompatActivity() {
                 cost = 6.50,
                 salePrice = 12.50,
                 variants = mutableListOf(
-                    ProductVariant(1L, "S", "Negro", 5),
-                    ProductVariant(2L, "M", "Negro", 8),
-                    ProductVariant(3L, "L", "Blanco", 6)
+                    ProductVariant("V1", "S", "Negro", 5),
+                    ProductVariant("V2", "M", "Negro", 8),
+                    ProductVariant("V3", "L", "Blanco", 6)
                 )
             )
         )
         productList.add(
             Product(
-                id = 2L,
+                id = "ZAP-042-ID",
                 sku = "ZAP-042",
                 name = "Zapatilla Deportiva Urbana",
                 brand = "Genérica",
@@ -87,14 +84,14 @@ class ProductCatalogActivity : AppCompatActivity() {
                 cost = 14.00,
                 salePrice = 25.00,
                 variants = mutableListOf(
-                    ProductVariant(1L, "38", "Blanco", 4),
-                    ProductVariant(2L, "40", "Negro", 7)
+                    ProductVariant("V4", "38", "Blanco", 4),
+                    ProductVariant("V5", "40", "Negro", 7)
                 )
             )
         )
         productList.add(
             Product(
-                id = 3L,
+                id = "GOR-009-ID",
                 sku = "GOR-009",
                 name = "Gorra Visera Curva",
                 brand = "Genérica",
@@ -102,7 +99,7 @@ class ProductCatalogActivity : AppCompatActivity() {
                 cost = 3.20,
                 salePrice = 7.00,
                 variants = mutableListOf(
-                    ProductVariant(1L, "Única", "Negro", 12)
+                    ProductVariant("V6", "Única", "Negro", 12)
                 )
             )
         )
@@ -129,9 +126,6 @@ class ProductCatalogActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Abre el formulario en modo creacion (product = null) o edicion.
-     */
     private fun showProductForm(product: Product?) {
         val sheet = ProductFormSheet.newInstance(product)
         sheet.onProductSaved = { savedProduct ->

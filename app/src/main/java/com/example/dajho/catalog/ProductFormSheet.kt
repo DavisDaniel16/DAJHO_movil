@@ -12,6 +12,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -20,10 +22,22 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
+import com.example.dajho.data.InMemoryStore
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.entity.LocalImageEntity
+import com.example.dajho.data.local.entity.ProductEntity
+import com.example.dajho.data.local.entity.ProductVariantEntity
+import com.example.dajho.data.local.entity.SyncStatus
+import com.example.dajho.util.toCentsLong
+import com.example.dajho.util.toCurrencyString
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
+import java.util.UUID
 
 /**
- * Formulario de Nuevo/Editar Producto con soporte de imagen e info esencial.
+ * Formulario de Nuevo/Editar Producto con Validaciones Estrictas y Almacenamiento Privado de Imagen (Fase 6).
  */
 class ProductFormSheet : BottomSheetDialogFragment() {
 
@@ -48,14 +62,20 @@ class ProductFormSheet : BottomSheetDialogFragment() {
     private lateinit var variantAdapter: VariantInputAdapter
     private val variantList = mutableListOf<ProductVariant>()
 
-    private var editProductId: Long = -1L
-    private var selectedImageUri: String? = null
+    private var currentProductId: String = UUID.randomUUID().toString()
+    private var isEditMode = false
+    private var selectedLocalImagePath: String? = null
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            selectedImageUri = it.toString()
-            ivFormProductImage.setImageURI(it)
-            ivFormProductImage.setPadding(0, 0, 0, 0)
+            val privatePath = copyImageToPrivateStorage(it)
+            if (privatePath != null) {
+                selectedLocalImagePath = privatePath
+                ivFormProductImage.setImageURI(Uri.fromFile(File(privatePath)))
+                ivFormProductImage.setPadding(0, 0, 0, 0)
+            } else {
+                Toast.makeText(requireContext(), "Error al guardar imagen privada", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -107,36 +127,26 @@ class ProductFormSheet : BottomSheetDialogFragment() {
 
         val editSku = arguments?.getString(ARG_SKU) ?: ""
         if (editSku.isNotBlank()) {
-            editProductId = arguments?.getLong(ARG_ID) ?: -1L
-            selectedImageUri = arguments?.getString(ARG_IMAGE)
-            if (!selectedImageUri.isNullOrBlank()) {
+            isEditMode = true
+            currentProductId = arguments?.getString(ARG_ID) ?: UUID.randomUUID().toString()
+            selectedLocalImagePath = arguments?.getString(ARG_IMAGE)
+
+            if (!selectedLocalImagePath.isNullOrBlank()) {
                 try {
-                    ivFormProductImage.setImageURI(Uri.parse(selectedImageUri))
-                    ivFormProductImage.setPadding(0, 0, 0, 0)
+                    val file = File(selectedLocalImagePath!!)
+                    if (file.exists()) {
+                        ivFormProductImage.setImageURI(Uri.fromFile(file))
+                        ivFormProductImage.setPadding(0, 0, 0, 0)
+                    }
                 } catch (_: Exception) {}
             }
+
             etSku.setText(editSku)
             etProdName.setText(arguments?.getString(ARG_NAME) ?: "")
             etBrand.setText(arguments?.getString(ARG_BRAND) ?: "")
             etCategory.setText(arguments?.getString(ARG_CATEGORY) ?: "")
             etCost.setText(formatNumber(arguments?.getDouble(ARG_COST) ?: 0.0))
             etSalePrice.setText(formatNumber(arguments?.getDouble(ARG_PRICE) ?: 0.0))
-            @Suppress("DEPRECATION")
-            val encoded = arguments?.getStringArrayList(ARG_VARIANTS) ?: arrayListOf()
-            variantList.clear()
-            encoded.forEach { line ->
-                val parts = line.split("~")
-                if (parts.size == 3) {
-                    variantList.add(
-                        ProductVariant(
-                            id = System.nanoTime(),
-                            size = parts[0],
-                            color = parts[1],
-                            stock = parts[2].toIntOrNull() ?: 0
-                        )
-                    )
-                }
-            }
         } else {
             variantList.add(newEmptyVariant())
         }
@@ -183,51 +193,154 @@ class ProductFormSheet : BottomSheetDialogFragment() {
             val name = etProdName.text?.toString()?.trim().orEmpty()
             val brand = etBrand.text?.toString()?.trim().orEmpty()
             val category = etCategory.text?.toString()?.trim().orEmpty()
-            val cost = etCost.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: 0.0
-            val price = etSalePrice.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: 0.0
+
+            val costStr = etCost.text?.toString()?.replace(",", ".")?.trim().orEmpty()
+            val priceStr = etSalePrice.text?.toString()?.replace(",", ".")?.trim().orEmpty()
 
             var valid = true
-            if (sku.isEmpty()) { tilSku.error = getString(R.string.error_required_field); valid = false }
-            if (name.isEmpty()) { tilProdName.error = getString(R.string.error_required_field); valid = false }
 
+            // 1. Validacion de SKU
+            if (sku.isEmpty()) {
+                tilSku.error = "Ingresa el código SKU"
+                valid = false
+            }
+
+            // 2. Validacion de Nombre
+            if (name.isEmpty()) {
+                tilProdName.error = "Ingresa el nombre del producto"
+                valid = false
+            }
+
+            // 3. Validacion de Costo positivo
+            val costVal = costStr.toDoubleOrNull()
+            if (costVal == null || costVal <= 0.0) {
+                Toast.makeText(requireContext(), "El costo debe ser mayor a $0.00", Toast.LENGTH_LONG).show()
+                valid = false
+            }
+
+            // 4. Validacion de Precio de venta >= Costo
+            val priceVal = priceStr.toDoubleOrNull()
+            if (priceVal == null || (costVal != null && priceVal < costVal)) {
+                Toast.makeText(requireContext(), "El precio de venta no puede ser menor que el costo", Toast.LENGTH_LONG).show()
+                valid = false
+            }
+
+            // 5. Validacion de Variantes
             val validVariants = variantList.filter { it.size.isNotBlank() || it.color.isNotBlank() }
             if (validVariants.isEmpty()) {
-                Toast.makeText(requireContext(), R.string.error_min_one_variant, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Agrega al menos una variante con talla/color", Toast.LENGTH_SHORT).show()
                 valid = false
+            }
+
+            for (v in validVariants) {
+                if (v.stock < 0) {
+                    Toast.makeText(requireContext(), "El stock no puede ser negativo", Toast.LENGTH_SHORT).show()
+                    valid = false
+                    break
+                }
             }
 
             if (!valid) return@setOnClickListener
 
-            val savedProduct = Product(
-                id = if (editProductId != -1L) editProductId else System.nanoTime(),
-                sku = sku,
-                name = name,
-                brand = brand.ifEmpty { getString(R.string.app_name) },
-                category = category.ifEmpty { getString(R.string.default_category) },
-                cost = cost,
-                salePrice = price,
-                imageUri = selectedImageUri,
-                variants = validVariants.mapIndexed { index, v ->
-                    ProductVariant(id = index.toLong(), size = v.size, color = v.color, stock = v.stock)
-                }.toMutableList()
-            )
-            onProductSaved?.invoke(savedProduct)
-            Toast.makeText(requireContext(), R.string.saved_product_ok, Toast.LENGTH_SHORT).show()
-            dismiss()
+            lifecycleScope.launch {
+                val db = AppDatabase.getInstance(requireContext())
+                val existingProduct = db.productDao().getProductBySku(sku)
+                if (existingProduct != null && existingProduct.id != currentProductId) {
+                    tilSku.error = "El código SKU ya existe en otro producto"
+                    return@launch
+                }
+
+                val costCents = costStr.toCentsLong()
+                val priceCents = priceStr.toCentsLong()
+
+                val productEntity = ProductEntity(
+                    id = currentProductId,
+                    sku = sku,
+                    name = name,
+                    brand = brand.ifEmpty { "DAJHO" },
+                    category = category.ifEmpty { "General" },
+                    costCents = costCents,
+                    salePriceCents = priceCents,
+                    imageUri = selectedLocalImagePath,
+                    syncStatus = SyncStatus.PENDING_INSERT
+                )
+
+                val variantEntities = validVariants.map { v ->
+                    ProductVariantEntity(
+                        id = UUID.randomUUID().toString(),
+                        productId = currentProductId,
+                        size = v.size.ifEmpty { "Única" },
+                        color = v.color.ifEmpty { "Único" },
+                        stock = v.stock.coerceAtLeast(0)
+                    )
+                }
+
+                if (!selectedLocalImagePath.isNullOrBlank()) {
+                    val localImage = LocalImageEntity(
+                        localFilePath = selectedLocalImagePath!!,
+                        remoteStoragePath = "products/$currentProductId.jpg",
+                        entityType = "PRODUCT",
+                        entityId = currentProductId
+                    )
+                    db.localImageDao().insertImage(localImage)
+                }
+
+                db.productDao().insertProduct(productEntity)
+                db.productDao().deleteVariantsByProductId(currentProductId)
+                db.productDao().insertVariants(variantEntities)
+
+                val savedProduct = Product(
+                    id = currentProductId,
+                    sku = sku,
+                    name = name,
+                    brand = brand.ifEmpty { "DAJHO" },
+                    category = category.ifEmpty { "General" },
+                    cost = costVal ?: 0.0,
+                    salePrice = priceVal ?: 0.0,
+                    imageUri = selectedLocalImagePath,
+                    variants = validVariants.toMutableList()
+                )
+
+                InMemoryStore.saveProduct(savedProduct)
+                onProductSaved?.invoke(savedProduct)
+                Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
+                dismiss()
+            }
         }
     }
 
     private fun updateMargin() {
         val cost = etCost.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: 0.0
         val price = etSalePrice.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: 0.0
-        if (cost > 0.0 && price > 0.0) {
+
+        if (cost > 0.0 && price > 0.0 && price >= cost) {
             val marginValue = price - cost
-            val marginPercent = ((marginValue / cost) * 100).toInt()
-            tvMargin.text = getString(R.string.margin_format, marginValue, marginPercent)
+            val marginPercent = ((marginValue / price) * 100).toInt()
+            val marginStr = marginValue.toCentsLong().toCurrencyString()
+            tvMargin.text = "Margen: $marginStr (${marginPercent}%)"
+            tvMargin.setTextColor(ContextCompat.getColor(requireContext(), R.color.badge_green_text))
             tvMargin.visibility = View.VISIBLE
         } else {
-            tvMargin.text = getString(R.string.margin_format, 0.0, 0)
+            tvMargin.text = "Margen: $0.00 (0%)"
+            tvMargin.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
             tvMargin.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun copyImageToPrivateStorage(sourceUri: Uri): String? {
+        return try {
+            val context = requireContext()
+            val imagesDir = File(context.filesDir, "product_images").apply { if (!exists()) mkdirs() }
+            val destFile = File(imagesDir, "prod_${UUID.randomUUID()}.jpg")
+
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                FileOutputStream(destFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            destFile.absolutePath
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -237,7 +350,7 @@ class ProductFormSheet : BottomSheetDialogFragment() {
     }
 
     private fun newEmptyVariant() = ProductVariant(
-        id = System.nanoTime(),
+        id = UUID.randomUUID().toString(),
         size = "",
         color = "",
         stock = 0
@@ -256,14 +369,12 @@ class ProductFormSheet : BottomSheetDialogFragment() {
         private const val ARG_COST = "arg_cost"
         private const val ARG_PRICE = "arg_price"
         private const val ARG_IMAGE = "arg_image"
-        private const val ARG_VARIANTS = "arg_variants"
-        private const val ARG_IS_EDIT = "arg_is_edit"
 
         fun newInstance(product: Product?): ProductFormSheet {
             val sheet = ProductFormSheet()
             if (product != null) {
                 val args = Bundle().apply {
-                    putLong(ARG_ID, product.id)
+                    putString(ARG_ID, product.id)
                     putString(ARG_SKU, product.sku)
                     putString(ARG_NAME, product.name)
                     putString(ARG_BRAND, product.brand)
@@ -271,11 +382,6 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                     putDouble(ARG_COST, product.cost)
                     putDouble(ARG_PRICE, product.salePrice)
                     putString(ARG_IMAGE, product.imageUri)
-                    putBoolean(ARG_IS_EDIT, true)
-                    putStringArrayList(
-                        ARG_VARIANTS,
-                        ArrayList(product.variants.map { "${it.size}~${it.color}~${it.stock}" })
-                    )
                 }
                 sheet.arguments = args
             }

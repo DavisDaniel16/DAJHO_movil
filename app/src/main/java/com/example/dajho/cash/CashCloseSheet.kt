@@ -10,14 +10,20 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.util.toCentsLong
+import com.example.dajho.util.toCurrencyString
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * BottomSheetDialogFragment para Cierre de Caja y Arqueo (Fase 4).
+ * BottomSheetDialogFragment para Cierre de Caja, Arqueo y Cierre Persistido en Room (Fase 9).
  */
 class CashCloseSheet : BottomSheetDialogFragment() {
 
@@ -58,14 +64,37 @@ class CashCloseSheet : BottomSheetDialogFragment() {
 
         btnConfirm.setOnClickListener {
             tilCounted.error = null
-            val counted = etCounted.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: -1.0
+            val countedStr = etCounted.text?.toString()?.replace(",", ".")?.trim().orEmpty()
+            val counted = countedStr.toDoubleOrNull() ?: -1.0
+
             if (counted < 0.0) {
                 tilCounted.error = getString(R.string.error_invalid_amount)
                 return@setOnClickListener
             }
-            onCashClosed?.invoke()
-            Toast.makeText(requireContext(), R.string.cash_close_success, Toast.LENGTH_SHORT).show()
-            dismiss()
+
+            lifecycleScope.launch {
+                try {
+                    val db = AppDatabase.getInstance(requireContext())
+                    val activeShift = db.cashDao().getActiveShiftFlow().firstOrNull()
+
+                    if (activeShift != null) {
+                        val actualCents = countedStr.toCentsLong()
+                        val expectedCents = expectedCash.toCentsLong()
+
+                        db.cashDao().closeShiftTransaction(
+                            sessionId = activeShift.id,
+                            actualCashCents = actualCents,
+                            expectedCashCents = expectedCents
+                        )
+                    }
+
+                    onCashClosed?.invoke()
+                    Toast.makeText(requireContext(), R.string.cash_close_success, Toast.LENGTH_SHORT).show()
+                    dismiss()
+                } catch (ex: Exception) {
+                    Toast.makeText(requireContext(), "Error al cerrar la caja: ${ex.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
@@ -73,15 +102,15 @@ class CashCloseSheet : BottomSheetDialogFragment() {
         val diff = counted - expectedCash
         when {
             Math.abs(diff) < 0.01 -> {
-                tvDiff.text = "Diferencia: $0.00 (Cuadrada perfectas)"
+                tvDiff.text = "Diferencia: $0.00 (Cuadrada perfecta)"
                 tvDiff.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.badge_green_text))
             }
             diff > 0.0 -> {
-                tvDiff.text = String.format(Locale.US, "Sobrante: +$%.2f", diff)
+                tvDiff.text = "Sobrante: +${(diff.toCentsLong()).toCurrencyString()}"
                 tvDiff.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.badge_tag_text))
             }
             else -> {
-                tvDiff.text = String.format(Locale.US, "Faltante: -$%.2f", Math.abs(diff))
+                tvDiff.text = "Faltante: -${(Math.abs(diff).toCentsLong()).toCurrencyString()}"
                 tvDiff.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.badge_red_text))
             }
         }

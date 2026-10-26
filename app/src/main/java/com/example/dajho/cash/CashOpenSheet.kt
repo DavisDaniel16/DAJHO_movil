@@ -7,13 +7,19 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.entity.CashSessionEntity
+import com.example.dajho.data.local.entity.SyncOperationEntity
+import com.example.dajho.util.toCentsLong
+import kotlinx.coroutines.launch
 
 /**
- * BottomSheetDialogFragment para Apertura de Caja (Fase 4).
+ * BottomSheetDialogFragment para Apertura de Caja Persistida en Room (Fase 9).
  */
 class CashOpenSheet : BottomSheetDialogFragment() {
 
@@ -39,14 +45,41 @@ class CashOpenSheet : BottomSheetDialogFragment() {
 
         btnConfirm.setOnClickListener {
             tilInitial.error = null
-            val amount = etInitial.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: -1.0
+            val amountStr = etInitial.text?.toString()?.replace(",", ".")?.trim().orEmpty()
+            val amount = amountStr.toDoubleOrNull() ?: -1.0
+
             if (amount < 0.0) {
                 tilInitial.error = getString(R.string.error_invalid_amount)
                 return@setOnClickListener
             }
-            onCashOpened?.invoke(amount)
-            Toast.makeText(requireContext(), R.string.cash_open_success, Toast.LENGTH_SHORT).show()
-            dismiss()
+
+            lifecycleScope.launch {
+                try {
+                    val db = AppDatabase.getInstance(requireContext())
+                    val initialCents = amountStr.toCentsLong()
+
+                    val sessionEntity = CashSessionEntity(
+                        initialCashCents = initialCents,
+                        expectedCashCents = initialCents
+                    )
+                    db.cashDao().insertShift(sessionEntity)
+
+                    db.syncOperationDao().insertOperation(
+                        SyncOperationEntity(
+                            entityName = "cash_sessions",
+                            entityId = sessionEntity.id,
+                            operation = "INSERT",
+                            payloadJson = "{\"initialCashCents\":$initialCents}"
+                        )
+                    )
+
+                    onCashOpened?.invoke(amount)
+                    Toast.makeText(requireContext(), R.string.cash_open_success, Toast.LENGTH_SHORT).show()
+                    dismiss()
+                } catch (ex: Exception) {
+                    Toast.makeText(requireContext(), "Error al abrir la caja: ${ex.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 

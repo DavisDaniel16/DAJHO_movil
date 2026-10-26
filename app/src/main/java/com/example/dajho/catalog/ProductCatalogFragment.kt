@@ -7,23 +7,27 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
+import com.example.dajho.data.InMemoryStore
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.DatabaseSeeder
+import kotlinx.coroutines.launch
 
 /**
- * Módulo de Gestión de Catálogo (Fase 1 - embebido como Fragmento en Home).
+ * Módulo de Gestión de Inventario / Catálogo (Estilo Treinta - Reactivo con Room - Fase 6).
  */
 class ProductCatalogFragment : Fragment() {
 
-    private lateinit var adapter: ProductAdapter
-    private val productList = mutableListOf<Product>()
+    private lateinit var adapter: InventoryAdapter
+    private val allRoomProducts = mutableListOf<Product>()
     private val visibleProducts = mutableListOf<Product>()
 
     private lateinit var etSearch: EditText
-    private lateinit var tvEmpty: TextView
+    private lateinit var llEmpty: View
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,16 +41,14 @@ class ProductCatalogFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         etSearch = view.findViewById(R.id.etSearchProduct)
-        tvEmpty = view.findViewById(R.id.tvEmptyCatalog)
+        llEmpty = view.findViewById(R.id.llEmptyCatalog)
         val rvProducts: RecyclerView = view.findViewById(R.id.rvProducts)
         val btnNewProduct: View = view.findViewById(R.id.btnNewProduct)
 
-        loadSeedData()
-
-        adapter = ProductAdapter(visibleProducts) { product ->
+        adapter = InventoryAdapter(visibleProducts) { product ->
             showProductForm(product)
         }
-        rvProducts.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvProducts.layoutManager = LinearLayoutManager(requireContext())
         rvProducts.adapter = adapter
 
         btnNewProduct.setOnClickListener {
@@ -57,91 +59,76 @@ class ProductCatalogFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                filterProducts(s?.toString().orEmpty())
+                updateProductList(s?.toString().orEmpty())
             }
         })
+
+        observeRoomProducts()
     }
 
-    private fun loadSeedData() {
-        productList.clear()
-        productList.add(
-            Product(
-                id = 1L,
-                sku = "CAM-001",
-                name = "Camiseta Polo Bordada",
-                brand = "DAJHO",
-                category = "Ropa",
-                cost = 6.50,
-                salePrice = 12.50,
-                variants = mutableListOf(
-                    ProductVariant(1L, "S", "Negro", 5),
-                    ProductVariant(2L, "M", "Negro", 8),
-                    ProductVariant(3L, "L", "Blanco", 6)
-                )
-            )
-        )
-        productList.add(
-            Product(
-                id = 2L,
-                sku = "ZAP-042",
-                name = "Zapatilla Deportiva Urbana",
-                brand = "Genérica",
-                category = "Calzado",
-                cost = 14.00,
-                salePrice = 25.00,
-                variants = mutableListOf(
-                    ProductVariant(1L, "38", "Blanco", 4),
-                    ProductVariant(2L, "40", "Negro", 7)
-                )
-            )
-        )
-        productList.add(
-            Product(
-                id = 3L,
-                sku = "GOR-009",
-                name = "Gorra Visera Curva",
-                brand = "Genérica",
-                category = "Accesorio",
-                cost = 3.20,
-                salePrice = 7.00,
-                variants = mutableListOf(
-                    ProductVariant(1L, "Única", "Negro", 12)
-                )
-            )
-        )
-        filterProducts(etSearch.text?.toString().orEmpty())
+    private fun observeRoomProducts() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ctx = context ?: return@launch
+            val db = AppDatabase.getInstance(ctx)
+            DatabaseSeeder.seedIfEmpty(db)
+
+            db.productDao().getAllProductsWithVariantsFlow().collect { roomWithVariants ->
+                allRoomProducts.clear()
+                val mapped = roomWithVariants.map { item ->
+                    Product(
+                        id = item.product.id,
+                        sku = item.product.sku,
+                        name = item.product.name,
+                        brand = item.product.brand,
+                        category = item.product.category,
+                        cost = item.product.costCents / 100.0,
+                        salePrice = item.product.salePriceCents / 100.0,
+                        imageUri = item.product.imageUri,
+                        variants = item.variants.map { v ->
+                            ProductVariant(
+                                id = v.id,
+                                size = v.size,
+                                color = v.color,
+                                stock = v.stock
+                            )
+                        }.toMutableList()
+                    )
+                }
+
+                allRoomProducts.addAll(if (mapped.isNotEmpty()) mapped else InMemoryStore.products)
+                updateProductList(etSearch.text?.toString().orEmpty())
+            }
+        }
     }
 
-    private fun filterProducts(query: String) {
+    private fun updateProductList(query: String) {
         val q = query.trim().lowercase()
         visibleProducts.clear()
+
+        val sourceList = if (allRoomProducts.isNotEmpty()) allRoomProducts else InMemoryStore.products
+
         if (q.isEmpty()) {
-            visibleProducts.addAll(productList)
+            visibleProducts.addAll(sourceList)
         } else {
             visibleProducts.addAll(
-                productList.filter {
+                sourceList.filter {
                     it.sku.lowercase().contains(q) ||
                         it.name.lowercase().contains(q) ||
                         it.category.lowercase().contains(q)
                 }
             )
         }
+
         if (::adapter.isInitialized) {
             adapter.updateData(visibleProducts)
-            tvEmpty.visibility = if (visibleProducts.isEmpty()) View.VISIBLE else View.GONE
+            llEmpty.visibility = if (visibleProducts.isEmpty()) View.VISIBLE else View.GONE
         }
     }
 
     private fun showProductForm(product: Product?) {
         val sheet = ProductFormSheet.newInstance(product)
-        sheet.onProductSaved = { savedProduct ->
-            val existingIndex = productList.indexOfFirst { it.id == savedProduct.id }
-            if (existingIndex >= 0) {
-                productList[existingIndex] = savedProduct
-            } else {
-                productList.add(savedProduct)
-            }
-            filterProducts(etSearch.text?.toString().orEmpty())
+        sheet.onProductSaved = {
+            updateProductList(etSearch.text?.toString().orEmpty())
         }
         sheet.show(childFragmentManager, ProductFormSheet.TAG)
     }

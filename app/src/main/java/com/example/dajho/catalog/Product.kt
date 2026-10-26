@@ -1,11 +1,12 @@
 package com.example.dajho.catalog
 
+import java.util.UUID
+
 /**
- * Modelo de UI para el catalogo (Fase 1).
- * Solo frontend: los datos viven en memoria para simular el API.
+ * Modelo de UI para el catalogo con IDs UUID String (Fase 6).
  */
 data class Product(
-    val id: Long,
+    val id: String = UUID.randomUUID().toString(),
     val sku: String,
     val name: String,
     val brand: String,
@@ -27,7 +28,7 @@ data class Product(
 }
 
 data class ProductVariant(
-    val id: Long,
+    val id: String = UUID.randomUUID().toString(),
     var size: String,
     var color: String,
     var stock: Int

@@ -8,16 +8,21 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
 import com.example.dajho.clients.Client
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.entity.DebtPaymentEntity
+import com.example.dajho.util.toCentsLong
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * BottomSheetDialogFragment para Cobro de Deuda / Abono de Cliente (Fase 4).
- * Incluye validacion estricta RN-08 (no superar la deuda restante).
+ * BottomSheetDialogFragment para Cobro de Deuda / Abono de Cliente con Transacción Atómica en Room (Fase 8 - RN-08).
  */
 class DebtPaymentSheet : BottomSheetDialogFragment() {
 
@@ -51,7 +56,8 @@ class DebtPaymentSheet : BottomSheetDialogFragment() {
 
         btnConfirm.setOnClickListener {
             tilAmount.error = null
-            val amount = etAmount.text?.toString()?.replace(",", ".")?.toDoubleOrNull() ?: 0.0
+            val amountStr = etAmount.text?.toString()?.replace(",", ".")?.trim().orEmpty()
+            val amount = amountStr.toDoubleOrNull() ?: 0.0
 
             if (amount <= 0.0) {
                 tilAmount.error = getString(R.string.error_invalid_amount)
@@ -64,9 +70,30 @@ class DebtPaymentSheet : BottomSheetDialogFragment() {
                 return@setOnClickListener
             }
 
-            onPaymentRecorded?.invoke(amount)
-            Toast.makeText(requireContext(), R.string.debt_payment_success, Toast.LENGTH_SHORT).show()
-            dismiss()
+            lifecycleScope.launch {
+                try {
+                    val db = AppDatabase.getInstance(requireContext())
+                    val activeShift = db.cashDao().getActiveShiftFlow().firstOrNull()
+
+                    val paymentEntity = DebtPaymentEntity(
+                        clientId = debtor.id.toString(),
+                        amountCents = amountStr.toCentsLong(),
+                        paymentMethod = "CASH"
+                    )
+
+                    // EJECUCIÓN ATÓMICA EN SQLITE (Fase 8)
+                    db.clientSupplierDao().recordClientDebtPaymentTransaction(
+                        payment = paymentEntity,
+                        activeShiftId = activeShift?.id
+                    )
+
+                    onPaymentRecorded?.invoke(amount)
+                    Toast.makeText(requireContext(), R.string.debt_payment_success, Toast.LENGTH_SHORT).show()
+                    dismiss()
+                } catch (ex: Exception) {
+                    Toast.makeText(requireContext(), "Error al guardar el abono: ${ex.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
