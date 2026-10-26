@@ -6,6 +6,7 @@ import com.example.dajho.data.local.entity.ClientEntity
 import com.example.dajho.data.local.entity.ProductEntity
 import com.example.dajho.data.local.entity.SaleEntity
 import kotlinx.coroutines.flow.firstOrNull
+import com.example.dajho.data.local.datastore.UserPreferences
 import java.io.File
 import java.io.FileOutputStream
 
@@ -19,7 +20,9 @@ object BackupManager {
 
     suspend fun exportLocalBackup(context: Context, db: AppDatabase): File {
         val products = db.productDao().getPendingSyncProducts()
-        val clients = db.clientSupplierDao().getAllClientsFlow("DEFAULT_BUSINESS").firstOrNull() ?: emptyList()
+        val businessId = UserPreferences(context).businessIdFlow.firstOrNull()
+            ?: throw IllegalStateException("No hay un negocio activo")
+        val clients = db.clientSupplierDao().getAllClientsFlow(businessId).firstOrNull() ?: emptyList()
         val sales = db.saleDao().getPendingSyncSales()
 
         val sb = java.lang.StringBuilder()

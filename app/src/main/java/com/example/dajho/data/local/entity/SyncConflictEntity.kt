@@ -5,13 +5,13 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Auditoría y Revisión Manual de Conflictos de Sincronización (Fase 15).
+ * Entidad Room para Conflictos de Sincronización (Tabla "conflictos_sincronizacion").
  */
-@Entity(tableName = "sync_conflicts")
+@Entity(tableName = "conflictos_sincronizacion")
 data class SyncConflictEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val conflictType: String, // OVERSELL_STOCK_WARNING, PRODUCT_PRICE_MISMATCH, PULL_COLLISION
+    val conflictType: String,
     val entityName: String,
     val entityId: String,
     val localPayloadJson: String,

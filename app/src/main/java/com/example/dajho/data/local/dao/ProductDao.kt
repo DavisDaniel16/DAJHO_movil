@@ -11,32 +11,29 @@ import com.example.dajho.data.local.entity.ProductVariantEntity
 import com.example.dajho.data.local.relation.ProductWithVariants
 import kotlinx.coroutines.flow.Flow
 
-/**
- * DAO Room para Productos, Variantes y Métricas de Inventario (Fase 10).
- */
 @Dao
 interface ProductDao {
 
-    @Query("SELECT * FROM products ORDER BY name ASC")
+    @Query("SELECT * FROM productos ORDER BY name ASC")
     fun getAllProductsFlow(): Flow<List<ProductEntity>>
 
     @Transaction
-    @Query("SELECT * FROM products WHERE (deletedAt IS NULL OR deletedAt = 0) ORDER BY name ASC")
+    @Query("SELECT * FROM productos WHERE (deletedAt IS NULL OR deletedAt = 0) ORDER BY name ASC")
     fun getAllProductsWithVariantsFlow(): Flow<List<ProductWithVariants>>
 
-    @Query("SELECT * FROM products WHERE id = :productId")
+    @Query("SELECT * FROM productos WHERE id = :productId")
     suspend fun getProductById(productId: String): ProductEntity?
 
-    @Query("SELECT * FROM products WHERE LOWER(sku) = LOWER(:sku) AND (deletedAt IS NULL OR deletedAt = 0) LIMIT 1")
+    @Query("SELECT * FROM productos WHERE LOWER(sku) = LOWER(:sku) AND (deletedAt IS NULL OR deletedAt = 0) LIMIT 1")
     suspend fun getProductBySku(sku: String): ProductEntity?
 
-    @Query("SELECT COUNT(*) FROM product_variants WHERE stock <= 3")
+    @Query("SELECT COUNT(*) FROM variantes_producto WHERE stock <= 3")
     suspend fun getLowStockVariantsCount(): Int
 
-    @Query("SELECT * FROM product_variants WHERE productId = :productId")
+    @Query("SELECT * FROM variantes_producto WHERE productId = :productId")
     fun getVariantsByProductIdFlow(productId: String): Flow<List<ProductVariantEntity>>
 
-    @Query("SELECT * FROM product_variants WHERE productId = :productId")
+    @Query("SELECT * FROM variantes_producto WHERE productId = :productId")
     suspend fun getVariantsByProductId(productId: String): List<ProductVariantEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -51,12 +48,12 @@ interface ProductDao {
     @Update
     suspend fun updateVariant(variant: ProductVariantEntity)
 
-    @Query("UPDATE products SET deletedAt = :deletedAt, syncStatus = 'PENDING_DELETE' WHERE id = :productId")
+    @Query("UPDATE productos SET deletedAt = :deletedAt, syncStatus = 'PENDING_DELETE' WHERE id = :productId")
     suspend fun softDeleteProduct(productId: String, deletedAt: Long = System.currentTimeMillis())
 
-    @Query("DELETE FROM product_variants WHERE productId = :productId")
+    @Query("DELETE FROM variantes_producto WHERE productId = :productId")
     suspend fun deleteVariantsByProductId(productId: String)
 
-    @Query("SELECT * FROM products WHERE syncStatus != 'SYNCED'")
+    @Query("SELECT * FROM productos WHERE syncStatus != 'SYNCED'")
     suspend fun getPendingSyncProducts(): List<ProductEntity>
 }

@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Proveedores (Fase 3).
+ * Entidad Room para Proveedores (Tabla "proveedores").
  */
-@Entity(tableName = "suppliers")
+@Entity(tableName = "proveedores")
 data class SupplierEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

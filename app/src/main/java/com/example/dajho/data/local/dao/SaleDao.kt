@@ -13,23 +13,20 @@ import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.data.local.relation.SaleWithItemsAndPayments
 import kotlinx.coroutines.flow.Flow
 
-/**
- * DAO Room para Ventas, Detalle y Agregaciones del Dashboard (Fase 10).
- */
 @Dao
 interface SaleDao {
 
-    @Query("SELECT * FROM sales ORDER BY timestamp DESC")
+    @Query("SELECT * FROM ventas ORDER BY timestamp DESC")
     fun getAllSalesFlow(): Flow<List<SaleEntity>>
 
     @Transaction
-    @Query("SELECT * FROM sales ORDER BY timestamp DESC")
+    @Query("SELECT * FROM ventas ORDER BY timestamp DESC")
     fun getAllSalesWithDetailsFlow(): Flow<List<SaleWithItemsAndPayments>>
 
-    @Query("SELECT * FROM sales WHERE id = :saleId")
+    @Query("SELECT * FROM ventas WHERE id = :saleId")
     suspend fun getSaleById(saleId: String): SaleEntity?
 
-    @Query("SELECT COALESCE(SUM(totalCents), 0) FROM sales WHERE timestamp >= :startOfDay AND timestamp <= :endOfDay")
+    @Query("SELECT COALESCE(SUM(totalCents), 0) FROM ventas WHERE timestamp >= :startOfDay AND timestamp <= :endOfDay")
     suspend fun getSalesTotalForDateRange(startOfDay: Long, endOfDay: Long): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -47,15 +44,20 @@ interface SaleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSyncOperation(operation: SyncOperationEntity)
 
-    @Query("UPDATE product_variants SET stock = MAX(0, stock - :quantity) WHERE id = :variantId")
-    suspend fun deductVariantStock(variantId: String, quantity: Int)
+    @Query(
+        "UPDATE variantes_producto SET stock = stock - :quantity, " +
+            "updatedAt = :updatedAt, syncStatus = 'PENDING_UPDATE' " +
+            "WHERE id = :variantId AND stock >= :quantity"
+    )
+    suspend fun deductVariantStock(
+        variantId: String,
+        quantity: Int,
+        updatedAt: Long = System.currentTimeMillis()
+    ): Int
 
-    @Query("UPDATE clients SET debtCents = debtCents + :addedDebtCents WHERE id = :clientId")
+    @Query("UPDATE clientes SET debtCents = debtCents + :addedDebtCents WHERE id = :clientId")
     suspend fun addClientDebt(clientId: String, addedDebtCents: Long)
 
-    /**
-     * Transacción atómica SQLite completa para finalizar venta (Fase 7).
-     */
     @Transaction
     suspend fun recordCompleteSale(
         sale: SaleEntity,
@@ -68,7 +70,11 @@ interface SaleDao {
         insertPayments(payments)
 
         for (item in items) {
-            deductVariantStock(item.variantId, item.quantity)
+            require(item.quantity > 0) { "La cantidad debe ser mayor que cero" }
+            val updatedRows = deductVariantStock(item.variantId, item.quantity)
+            check(updatedRows == 1) {
+                "Stock insuficiente o variante inexistente para ${item.variantId}"
+            }
         }
 
         if (sale.paymentMethod == "CREDIT" && sale.clientId != null) {
@@ -89,14 +95,28 @@ interface SaleDao {
 
         insertSyncOperation(
             SyncOperationEntity(
-                entityName = "sales",
+                entityName = "ventas",
                 entityId = sale.id,
                 operation = "INSERT",
-                payloadJson = "{\"saleNumber\":\"${sale.saleNumber}\",\"totalCents\":${sale.totalCents}}"
+                payloadJson = """
+                    {
+                      "id":"${sale.id}",
+                      "negocio_id":"${sale.businessId}",
+                      "usuario_id":"${sale.userId}",
+                      "numero_venta":"${sale.saleNumber}",
+                      "cliente_id":${sale.clientId?.let { "\"$it\"" } ?: "null"},
+                      "metodo_pago":"${sale.paymentMethod}",
+                      "referencia_transferencia":${sale.transferReference?.let { "\"$it\"" } ?: "null"},
+                      "total_centavos":${sale.totalCents},
+                      "marca_tiempo":${sale.timestamp},
+                      "creado_en":"${java.time.Instant.ofEpochMilli(sale.createdAt)}",
+                      "actualizado_en":"${java.time.Instant.ofEpochMilli(sale.updatedAt)}"
+                    }
+                """.trimIndent()
             )
         )
     }
 
-    @Query("SELECT * FROM sales WHERE syncStatus != 'SYNCED'")
+    @Query("SELECT * FROM ventas WHERE syncStatus != 'SYNCED'")
     suspend fun getPendingSyncSales(): List<SaleEntity>
 }

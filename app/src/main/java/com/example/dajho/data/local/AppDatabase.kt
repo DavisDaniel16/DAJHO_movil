@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.dajho.data.local.dao.BusinessDao
 import com.example.dajho.data.local.dao.CashDao
 import com.example.dajho.data.local.dao.ClientSupplierDao
@@ -33,7 +35,7 @@ import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.data.local.entity.UserProfileEntity
 
 /**
- * Base de Datos Room principal de DAJHO con 16 entidades locales (Fase 15).
+ * Base de Datos Room principal de DAJHO en Español (Fase 18).
  */
 @Database(
     entities = [
@@ -54,7 +56,7 @@ import com.example.dajho.data.local.entity.UserProfileEntity
         LocalImageEntity::class,
         SyncConflictEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -82,10 +84,20 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "dajho_database.db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_6_7)
                     .build()
                 INSTANCE = instance
                 instance
+            }
+
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_operaciones_sincronizacion_createdAt " +
+                        "ON operaciones_sincronizacion(createdAt)"
+                )
             }
         }
     }

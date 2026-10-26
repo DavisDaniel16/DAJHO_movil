@@ -15,7 +15,11 @@ interface AuthRepository {
         email: String,
         phone: String,
         businessName: String,
-        passwordHash: String
+        passwordHash: String,
+        rucOrCedula: String = "",
+        businessPhone: String = phone,
+        address: String = "",
+        rimpeType: String = "RIMPE_POPULAR"
     ): Result<UserProfileEntity>
 
     suspend fun loginLocalUser(email: String, passwordHash: String): Result<UserProfileEntity>

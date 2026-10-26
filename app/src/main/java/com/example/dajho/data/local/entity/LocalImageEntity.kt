@@ -5,15 +5,15 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Imágenes locales pendientes de subir a Supabase Storage (Fase 3).
+ * Entidad Room para Imágenes Locales (Tabla "imagenes_locales").
  */
-@Entity(tableName = "local_images")
+@Entity(tableName = "imagenes_locales")
 data class LocalImageEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val localFilePath: String,
     val remoteStoragePath: String,
-    val entityType: String, // PRODUCT, RECEIPT
+    val entityType: String,
     val entityId: String,
     val syncStatus: SyncStatus = SyncStatus.PENDING_INSERT,
     val createdAt: Long = System.currentTimeMillis()

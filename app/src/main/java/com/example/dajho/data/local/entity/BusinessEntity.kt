@@ -5,10 +5,9 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Comercios/Negocios (Fase 3).
- * Identificadores UUID, soporte multi-negocio y régimen fiscal RIMPE.
+ * Entidad Room para Negocios/Comercios (Tabla "negocios").
  */
-@Entity(tableName = "businesses")
+@Entity(tableName = "negocios")
 data class BusinessEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
@@ -16,7 +15,7 @@ data class BusinessEntity(
     val rucOrCedula: String,
     val phone: String,
     val address: String = "",
-    val rimpeType: String = "RIMPE_POPULAR", // RIMPE_POPULAR, RIMPE_EMPRENDEDOR, GENERAL
+    val rimpeType: String = "RIMPE_POPULAR",
     val syncStatus: SyncStatus = SyncStatus.PENDING_INSERT,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

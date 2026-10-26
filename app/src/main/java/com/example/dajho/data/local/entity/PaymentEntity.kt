@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Desglose de Formas de Pago por Venta (Fase 3).
+ * Entidad Room para Pagos (Tabla "pagos").
  */
 @Entity(
-    tableName = "payments",
+    tableName = "pagos",
     foreignKeys = [
         ForeignKey(
             entity = SaleEntity::class,
@@ -25,7 +25,7 @@ data class PaymentEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val saleId: String,
-    val method: String, // CASH, TRANSFER, CREDIT
+    val method: String,
     val amountCents: Long,
     val reference: String? = null,
     val createdAt: Long = System.currentTimeMillis()

@@ -5,15 +5,18 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.LinearLayout
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.lifecycle.lifecycleScope
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.datastore.UserPreferences
 import com.example.dajho.data.repository.AuthRepositoryImpl
-import com.example.dajho.util.PasswordUtils
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /**
  * Actividad de Registro con validaciones completas, hashing SHA-256 y guardado local (Fase 5).
@@ -35,8 +38,31 @@ class SignUpActivity : AppCompatActivity() {
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnCreateAccount = findViewById<AppCompatButton>(R.id.btnCreateAccount)
         val tvLoginLink = findViewById<TextView>(R.id.tvLoginLink)
+        val tvStep = findViewById<TextView>(R.id.tvSignUpStep)
+        val businessFields = findViewById<LinearLayout>(R.id.businessFieldsContainer)
+        val etBusinessName = findViewById<TextInputEditText>(R.id.etBusinessName)
+        val etBusinessRuc = findViewById<TextInputEditText>(R.id.etBusinessRuc)
+        val etBusinessAddress = findViewById<TextInputEditText>(R.id.etBusinessAddress)
+        val etBusinessPhone = findViewById<TextInputEditText>(R.id.etBusinessPhone)
+        val spinnerRimpe = findViewById<Spinner>(R.id.spinnerRimpe)
+        var businessStep = false
+        btnCreateAccount?.text = "CONTINUAR"
+        spinnerRimpe.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            listOf("RIMPE Popular", "RIMPE Emprendedor", "Régimen General")
+        )
 
-        btnBack?.setOnClickListener { finish() }
+        btnBack?.setOnClickListener {
+            if (businessStep) {
+                businessStep = false
+                tvStep?.text = "Paso 1 de 2"
+                businessFields?.visibility = android.view.View.GONE
+                btnCreateAccount?.text = "CONTINUAR"
+            } else {
+                finish()
+            }
+        }
         tvLoginLink?.setOnClickListener { finish() }
 
         btnCreateAccount?.setOnClickListener {
@@ -69,6 +95,33 @@ class SignUpActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (!businessStep) {
+                businessStep = true
+                tvStep?.text = "Paso 2 de 2"
+                businessFields?.visibility = android.view.View.VISIBLE
+                btnCreateAccount?.text = "CREAR CUENTA"
+                etBusinessPhone?.setText(phone)
+                return@setOnClickListener
+            }
+
+            val businessName = etBusinessName?.text?.toString()?.trim().orEmpty()
+            val rucOrCedula = etBusinessRuc?.text?.toString()?.trim().orEmpty()
+            val businessAddress = etBusinessAddress?.text?.toString()?.trim().orEmpty()
+            val businessPhone = etBusinessPhone?.text?.toString()?.trim().orEmpty()
+            if (businessName.isBlank()) {
+                etBusinessName?.error = "Ingresa el nombre del negocio"
+                return@setOnClickListener
+            }
+            if (businessPhone.length < 9) {
+                etBusinessPhone?.error = "Ingresa un teléfono válido"
+                return@setOnClickListener
+            }
+            val rimpeType = when (spinnerRimpe?.selectedItemPosition ?: 0) {
+                1 -> "RIMPE_EMPRENDEDOR"
+                2 -> "GENERAL"
+                else -> "RIMPE_POPULAR"
+            }
+
             // 5. Procesamiento de Registro Local seguro
             lifecycleScope.launch {
                 val db = AppDatabase.getInstance(this@SignUpActivity)
@@ -87,19 +140,28 @@ class SignUpActivity : AppCompatActivity() {
                 }
 
                 // 7. Persistencia del perfil y sesion activa
-                val passHash = PasswordUtils.hashPassword(password)
                 val result = authRepo.registerLocalUser(
                     fullName = fullName,
                     email = email,
                     phone = phone,
-                    businessName = "Comercio de $fullName",
-                    passwordHash = passHash
+                    businessName = businessName,
+                    passwordHash = password,
+                    rucOrCedula = rucOrCedula,
+                    businessPhone = businessPhone,
+                    address = businessAddress,
+                    rimpeType = rimpeType
                 )
 
                 result.fold(
                     onSuccess = {
-                        Toast.makeText(this@SignUpActivity, "¡Registro exitoso! Sesión iniciada.", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this@SignUpActivity, HomeActivity::class.java)
+                        val loggedIn = userPreferences.isLoggedInFlow.first()
+                        val intent = if (loggedIn) {
+                            Toast.makeText(this@SignUpActivity, "¡Registro exitoso! Sesión iniciada.", Toast.LENGTH_SHORT).show()
+                            Intent(this@SignUpActivity, HomeActivity::class.java)
+                        } else {
+                            Toast.makeText(this@SignUpActivity, "Cuenta creada. Confirma tu correo y luego inicia sesión.", Toast.LENGTH_LONG).show()
+                            Intent(this@SignUpActivity, LoginActivity::class.java)
+                        }
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
                         finish()

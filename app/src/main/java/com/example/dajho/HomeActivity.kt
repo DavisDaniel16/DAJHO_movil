@@ -5,6 +5,10 @@ import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import android.app.DatePickerDialog
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -12,12 +16,14 @@ import com.example.dajho.cash.CashDebtFragment
 import com.example.dajho.catalog.ProductCatalogFragment
 import com.example.dajho.clients.ClientListFragment
 import com.example.dajho.data.local.datastore.UserPreferences
+import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.sync.SyncManager
 import com.example.dajho.pos.PosFragment
 import com.example.dajho.profile.ProfileActivity
 import com.example.dajho.profile.SettingsActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /**
  * Activity principal con diseño y arquitectura oficial estilo Treinta (Fase 14).
@@ -56,8 +62,15 @@ class HomeActivity : AppCompatActivity() {
             val tvGreeting = findViewById<TextView>(R.id.tvGreeting)
             lifecycleScope.launch {
                 userPreferences.userNameFlow.collect { name ->
-                    tvGreeting?.text = name
+                    tvGreeting?.text = name.orEmpty()
                 }
+            }
+            lifecycleScope.launch {
+                val businessId = userPreferences.businessIdFlow.first() ?: return@launch
+                val business = AppDatabase.getInstance(this@HomeActivity)
+                    .businessDao()
+                    .getBusinessById(businessId)
+                findViewById<TextView>(R.id.tvBusinessName)?.text = business?.name.orEmpty()
             }
 
             // 2. Profile Button Click -> Open ProfileActivity
@@ -89,6 +102,8 @@ class HomeActivity : AppCompatActivity() {
                 val searchSheet = GlobalSearchSheet()
                 searchSheet.show(supportFragmentManager, GlobalSearchSheet.TAG)
             }
+
+            setupDateSelector()
 
             // 6. Bottom Navigation View setup (Treinta style: Inicio, Balance, Venta, Deudas, Inventario)
             bottomNavigation = findViewById(R.id.bottomNavigation)
@@ -122,8 +137,44 @@ class HomeActivity : AppCompatActivity() {
                     else -> false
                 }
             }
+
         } catch (e: Exception) {
-            e.printStackTrace()
+            Toast.makeText(this, "No se pudo cargar la pantalla principal", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun setupDateSelector() {
+        val chips = listOf(
+            findViewById<TextView>(R.id.chipDateMinus3),
+            findViewById<TextView>(R.id.chipDateMinus2),
+            findViewById<TextView>(R.id.chipDateMinus1),
+            findViewById<TextView>(R.id.chipDateSelected)
+        )
+        val dates = (3 downTo 0).map { offset ->
+            Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -offset) }
+        }
+        val formatter = SimpleDateFormat("d MMM", Locale("es", "EC"))
+        chips.forEachIndexed { index, chip ->
+            chip.text = formatter.format(dates[index].time).lowercase(Locale("es", "EC"))
+            chip.setOnClickListener {
+                chips.forEach { it.setBackgroundResource(R.drawable.bg_chip_unselected) }
+                chip.setBackgroundResource(R.drawable.bg_chip_selected)
+                homeDashboardFragment.selectDate(dates[index])
+            }
+        }
+        findViewById<android.widget.ImageView>(R.id.btnCalendarPicker)?.setOnClickListener {
+            val now = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, year, month, day ->
+                    homeDashboardFragment.selectDate(Calendar.getInstance().apply {
+                        set(year, month, day)
+                    })
+                },
+                now.get(Calendar.YEAR),
+                now.get(Calendar.MONTH),
+                now.get(Calendar.DAY_OF_MONTH)
+            ).show()
         }
     }
 

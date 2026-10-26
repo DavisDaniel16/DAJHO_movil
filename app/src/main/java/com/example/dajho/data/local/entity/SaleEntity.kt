@@ -5,17 +5,17 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Ventas y Notas de Venta RIMPE (Fase 3).
+ * Entidad Room para Ventas (Tabla "ventas").
  */
-@Entity(tableName = "sales")
+@Entity(tableName = "ventas")
 data class SaleEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val businessId: String = "DEFAULT_BUSINESS",
     val userId: String = "DEFAULT_USER",
     val saleNumber: String,
-    val clientId: String? = null, // Nulo para Consumidor Final
-    val paymentMethod: String, // CASH, TRANSFER, CREDIT
+    val clientId: String? = null,
+    val paymentMethod: String,
     val transferReference: String? = null,
     val totalCents: Long,
     val timestamp: Long = System.currentTimeMillis(),

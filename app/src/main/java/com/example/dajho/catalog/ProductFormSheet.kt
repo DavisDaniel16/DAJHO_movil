@@ -22,8 +22,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.dajho.R
-import com.example.dajho.data.InMemoryStore
 import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.datastore.UserPreferences
 import com.example.dajho.data.local.entity.LocalImageEntity
 import com.example.dajho.data.local.entity.ProductEntity
 import com.example.dajho.data.local.entity.ProductVariantEntity
@@ -31,6 +31,7 @@ import com.example.dajho.data.local.entity.SyncStatus
 import com.example.dajho.util.toCentsLong
 import com.example.dajho.util.toCurrencyString
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
@@ -252,9 +253,15 @@ class ProductFormSheet : BottomSheetDialogFragment() {
 
                 val costCents = costStr.toCentsLong()
                 val priceCents = priceStr.toCentsLong()
+                val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                    ?: run {
+                        Toast.makeText(requireContext(), "No hay un negocio activo", Toast.LENGTH_LONG).show()
+                        return@launch
+                    }
 
                 val productEntity = ProductEntity(
                     id = currentProductId,
+                    businessId = businessId,
                     sku = sku,
                     name = name,
                     brand = brand.ifEmpty { "DAJHO" },
@@ -301,7 +308,6 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                     variants = validVariants.toMutableList()
                 )
 
-                InMemoryStore.saveProduct(savedProduct)
                 onProductSaved?.invoke(savedProduct)
                 Toast.makeText(requireContext(), "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
                 dismiss()

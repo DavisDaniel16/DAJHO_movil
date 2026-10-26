@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
-import com.example.dajho.data.InMemoryStore
 import com.example.dajho.data.local.AppDatabase
 import com.example.dajho.data.local.DatabaseSeeder
 import kotlinx.coroutines.launch
@@ -95,7 +94,7 @@ class ProductCatalogFragment : Fragment() {
                     )
                 }
 
-                allRoomProducts.addAll(if (mapped.isNotEmpty()) mapped else InMemoryStore.products)
+                allRoomProducts.addAll(mapped)
                 updateProductList(etSearch.text?.toString().orEmpty())
             }
         }
@@ -105,7 +104,7 @@ class ProductCatalogFragment : Fragment() {
         val q = query.trim().lowercase()
         visibleProducts.clear()
 
-        val sourceList = if (allRoomProducts.isNotEmpty()) allRoomProducts else InMemoryStore.products
+        val sourceList = allRoomProducts
 
         if (q.isEmpty()) {
             visibleProducts.addAll(sourceList)

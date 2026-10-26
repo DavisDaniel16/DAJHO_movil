@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Entidad Room para Detalle de Items de Venta (Fase 3).
+ * Entidad Room para Detalles de Venta (Tabla "detalles_venta").
  */
 @Entity(
-    tableName = "sale_items",
+    tableName = "detalles_venta",
     foreignKeys = [
         ForeignKey(
             entity = SaleEntity::class,

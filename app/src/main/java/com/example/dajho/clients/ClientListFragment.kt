@@ -16,7 +16,16 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dajho.R
-import com.example.dajho.data.InMemoryStore
+import androidx.lifecycle.lifecycleScope
+import com.example.dajho.data.local.AppDatabase
+import com.example.dajho.data.local.DatabaseSeeder
+import com.example.dajho.data.local.entity.ClientEntity
+import com.example.dajho.data.local.entity.SupplierEntity
+import com.example.dajho.data.local.datastore.UserPreferences
+import com.example.dajho.util.toCentsLong
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
@@ -30,6 +39,9 @@ class ClientListFragment : Fragment() {
 
     private lateinit var adapter: ClientAdapter
     private val supplierList = mutableListOf<Client>()
+    private val clientList = mutableListOf<Client>()
+    private val clientIdsByUiId = mutableMapOf<Long, String>()
+    private val supplierIdsByUiId = mutableMapOf<Long, String>()
     private val visibleItems = mutableListOf<Client>()
 
     private lateinit var tabPorCobrar: TextView
@@ -68,8 +80,6 @@ class ClientListFragment : Fragment() {
         btnNewClient = view.findViewById(R.id.btnNewClientFloating)
         val btnReports: Button = view.findViewById(R.id.btnReportsDeudas)
 
-        loadSeedData()
-
         adapter = ClientAdapter(visibleItems) { item ->
             showClientForm(item)
         }
@@ -100,6 +110,7 @@ class ClientListFragment : Fragment() {
         })
 
         selectTab(DebtTab.POR_COBRAR)
+        observeClients()
     }
 
     override fun onResume() {
@@ -144,19 +155,47 @@ class ClientListFragment : Fragment() {
         filterItems(etSearch.text?.toString().orEmpty())
     }
 
-    private fun loadSeedData() {
-        if (supplierList.isEmpty()) {
-            supplierList.add(
-                Client(101L, "Textiles El Telar S.A.", "099 888 7766", "Distribuidor de Telas", 120.00)
-            )
-            supplierList.add(
-                Client(102L, "Calzados Indumil Ecuador", "098 111 2233", "Fábrica Ambato", 85.00)
-            )
+    private fun observeClients() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val db = AppDatabase.getInstance(requireContext())
+            DatabaseSeeder.seedIfEmpty(db)
+            val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                ?: return@launch
+            launch {
+                db.clientSupplierDao().getAllClientsFlow(businessId).collect { entities ->
+                    clientList.clear()
+                    clientIdsByUiId.clear()
+                    clientList.addAll(entities.map { entity ->
+                        val uiId = entity.id.hashCode().toLong()
+                        clientIdsByUiId[uiId] = entity.id
+                        Client(
+                            uiId,
+                            entity.name,
+                            entity.phone,
+                            entity.info,
+                            entity.debtCents / 100.0
+                        )
+                    })
+                    filterItems(etSearch.text?.toString().orEmpty())
+                }
+            }
+            launch {
+                db.clientSupplierDao().getAllSuppliersFlow(businessId).collect { entities ->
+                    supplierList.clear()
+                    supplierIdsByUiId.clear()
+                    supplierList.addAll(entities.map { entity ->
+                        val uiId = entity.id.hashCode().toLong()
+                        supplierIdsByUiId[uiId] = entity.id
+                        Client(uiId, entity.name, entity.phone, entity.info, entity.debtCents / 100.0)
+                    })
+                    filterItems(etSearch.text?.toString().orEmpty())
+                }
+            }
         }
     }
 
     private fun filterItems(query: String) {
-        val targetList = if (currentTab == DebtTab.POR_COBRAR) InMemoryStore.clients else supplierList
+        val targetList = if (currentTab == DebtTab.POR_COBRAR) clientList else supplierList
         val q = query.trim().lowercase()
 
         visibleItems.clear()
@@ -191,13 +230,35 @@ class ClientListFragment : Fragment() {
         val sheet = ClientFormSheet.newInstance(client)
         sheet.onClientSaved = { savedClient ->
             if (currentTab == DebtTab.POR_COBRAR) {
-                InMemoryStore.saveClient(savedClient)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val entityId = clientIdsByUiId[savedClient.id] ?: java.util.UUID.randomUUID().toString()
+                    AppDatabase.getInstance(requireContext()).clientSupplierDao().insertClient(
+                        ClientEntity(
+                            id = entityId,
+                            businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                                ?: return@launch,
+                            name = savedClient.name,
+                            phone = savedClient.phone,
+                            info = savedClient.info,
+                            debtCents = savedClient.debt.toCentsLong()
+                        )
+                    )
+                }
             } else {
-                val index = supplierList.indexOfFirst { it.id == savedClient.id }
-                if (index >= 0) {
-                    supplierList[index] = savedClient
-                } else {
-                    supplierList.add(savedClient)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                        ?: return@launch
+                    val supplierId = supplierIdsByUiId[savedClient.id] ?: java.util.UUID.randomUUID().toString()
+                    AppDatabase.getInstance(requireContext()).clientSupplierDao().insertSupplier(
+                        SupplierEntity(
+                            id = supplierId,
+                            businessId = businessId,
+                            name = savedClient.name,
+                            phone = savedClient.phone,
+                            info = savedClient.info,
+                            debtCents = savedClient.debt.toCentsLong()
+                        )
+                    )
                 }
             }
             filterItems(etSearch.text?.toString().orEmpty())
