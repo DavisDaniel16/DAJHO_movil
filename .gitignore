@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+*.sql
+respaldo_dajho_pre_migracion.sql
