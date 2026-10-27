@@ -17,8 +17,11 @@ import com.example.dajho.data.local.entity.DebtPaymentEntity
 import com.example.dajho.data.local.entity.ExpenseEntity
 import com.example.dajho.data.local.entity.CashSessionEntity
 import com.example.dajho.data.local.entity.CashMovementEntity
+<<<<<<< HEAD
 import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.data.local.dao.SyncOperationDao
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.request.delete
@@ -36,7 +39,10 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import java.io.File
 import org.json.JSONArray
+<<<<<<< HEAD
 import org.json.JSONObject
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 import kotlinx.coroutines.flow.first
 
 /**
@@ -62,9 +68,14 @@ class SyncWorker(
 
         val httpClient = HttpClient(Android)
         return try {
+<<<<<<< HEAD
             // 1. ESCANEAR Y ENCOLAR AUTOMÁTICAMENTE PRODUCTOS, CLIENTES Y VENTAS HUÉRFANOS O PENDIENTES
             scanAndQueueOrphanProducts(db, syncDao)
             scanAndQueueOrphanEntities(db, syncDao)
+=======
+            val pendingOps = syncDao.getAllPendingOperations()
+            var retryRequired = false
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 
             val pendingOps = syncDao.getAllPendingOperations()
             var retryRequired = false
@@ -115,6 +126,7 @@ class SyncWorker(
         }
     }
 
+<<<<<<< HEAD
     /**
      * Detecta productos locales cuyo estado no sea SYNCED y los encola automáticamente
      * en la tabla de operaciones de sincronización utilizando verificación previa y OnConflict.IGNORE.
@@ -280,6 +292,41 @@ class SyncWorker(
         }
     }
 
+=======
+    private suspend fun executeIdempotentPush(
+        httpClient: HttpClient,
+        accessToken: String,
+        op: com.example.dajho.data.local.entity.SyncOperationEntity
+    ) {
+        val table = remoteTableName(op.entityName)
+        val baseUrl = "${BuildConfig.SUPABASE_URL}/rest/v1/$table"
+        val response = if (op.operation == "DELETE") {
+            httpClient.delete("$baseUrl?id=eq.${op.entityId}") {
+                addSupabaseHeaders(accessToken)
+            }
+        } else if (op.operation == "UPDATE") {
+            httpClient.request("$baseUrl?id=eq.${op.entityId}") {
+                method = HttpMethod.Patch
+                addSupabaseHeaders(accessToken)
+                header("Prefer", "return=minimal")
+                contentType(ContentType.Application.Json)
+                setBody(op.payloadJson)
+            }
+        } else {
+            httpClient.post("$baseUrl?on_conflict=id") {
+                addSupabaseHeaders(accessToken)
+                header("Prefer", "resolution=merge-duplicates,return=minimal")
+                contentType(ContentType.Application.Json)
+                setBody(op.payloadJson)
+            }
+        }
+
+        check(response.status.isSuccess()) {
+            "Supabase rechazó ${op.operation} ${op.entityName}/${op.entityId}: HTTP ${response.status.value}"
+        }
+    }
+
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
     private suspend fun executePullSyncFromSupabase(httpClient: HttpClient, accessToken: String, db: AppDatabase) {
         pullProducts(httpClient, accessToken, db)
         pullClients(httpClient, accessToken, db)
@@ -465,7 +512,11 @@ class SyncWorker(
         }
     }
 
+<<<<<<< HEAD
     private suspend fun getRemoteRows(httpClient: HttpClient, accessToken: String, table: String): List<JSONObject> {
+=======
+    private suspend fun getRemoteRows(httpClient: HttpClient, accessToken: String, table: String): List<org.json.JSONObject> {
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
         val response = httpClient.get("${BuildConfig.SUPABASE_URL}/rest/v1/$table?select=*") {
             addSupabaseHeaders(accessToken)
         }

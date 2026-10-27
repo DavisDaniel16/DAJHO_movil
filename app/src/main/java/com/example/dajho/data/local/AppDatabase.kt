@@ -34,6 +34,12 @@ import com.example.dajho.data.local.entity.SyncConflictEntity
 import com.example.dajho.data.local.entity.SyncOperationEntity
 import com.example.dajho.data.local.entity.UserProfileEntity
 
+<<<<<<< HEAD
+=======
+/**
+ * Base de Datos Room principal de DAJHO en Español (Fase 18).
+ */
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 @Database(
     entities = [
         BusinessEntity::class,
@@ -86,6 +92,16 @@ abstract class AppDatabase : RoomDatabase() {
                     .build()
                 INSTANCE = instance
                 instance
+            }
+
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_operaciones_sincronizacion_createdAt " +
+                        "ON operaciones_sincronizacion(createdAt)"
+                )
             }
         }
 

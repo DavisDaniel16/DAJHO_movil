@@ -21,10 +21,13 @@ interface ProductDao {
     @Query("SELECT * FROM productos WHERE (deletedAt IS NULL OR deletedAt = 0) ORDER BY name ASC")
     fun getAllProductsWithVariantsFlow(): Flow<List<ProductWithVariants>>
 
+<<<<<<< HEAD
     @Transaction
     @Query("SELECT * FROM productos WHERE businessId = :businessId AND (deletedAt IS NULL OR deletedAt = 0) ORDER BY name ASC")
     fun getProductsByBusinessFlow(businessId: String): Flow<List<ProductWithVariants>>
 
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
     @Query("SELECT * FROM productos WHERE id = :productId")
     suspend fun getProductById(productId: String): ProductEntity?
 

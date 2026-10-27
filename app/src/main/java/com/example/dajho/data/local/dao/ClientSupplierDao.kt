@@ -19,9 +19,12 @@ interface ClientSupplierDao {
     @Query("SELECT * FROM clientes WHERE businessId = :businessId AND deletedAt IS NULL ORDER BY name ASC")
     fun getAllClientsFlow(businessId: String): Flow<List<ClientEntity>>
 
+<<<<<<< HEAD
     @Query("SELECT * FROM clientes WHERE syncStatus != 'SYNCED'")
     suspend fun getPendingSyncClients(): List<ClientEntity>
 
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
     @Query("SELECT * FROM clientes WHERE id = :clientId")
     suspend fun getClientById(clientId: String): ClientEntity?
 
@@ -43,9 +46,12 @@ interface ClientSupplierDao {
     @Query("SELECT * FROM proveedores WHERE businessId = :businessId AND deletedAt IS NULL ORDER BY name ASC")
     fun getAllSuppliersFlow(businessId: String): Flow<List<SupplierEntity>>
 
+<<<<<<< HEAD
     @Query("SELECT * FROM proveedores WHERE syncStatus != 'SYNCED'")
     suspend fun getPendingSyncSuppliers(): List<SupplierEntity>
 
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
     @Query("SELECT * FROM proveedores WHERE id = :supplierId")
     suspend fun getSupplierById(supplierId: String): SupplierEntity?
 

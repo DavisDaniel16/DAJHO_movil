@@ -162,6 +162,7 @@ class HomeActivity : AppCompatActivity() {
         val formatter = SimpleDateFormat("d MMM", Locale("es", "EC"))
         chips.forEachIndexed { index, chip ->
             chip.text = formatter.format(dates[index].time).lowercase(Locale("es", "EC"))
+<<<<<<< HEAD
 
             // Estado inicial: solo el último (hoy, ej. 26 oct) seleccionado
             if (index == 3) {
@@ -183,6 +184,11 @@ class HomeActivity : AppCompatActivity() {
                 chip.setBackgroundResource(R.drawable.bg_chip_selected)
                 chip.setTextColor(getColor(R.color.btn_text_color))
                 chip.setTypeface(null, android.graphics.Typeface.BOLD)
+=======
+            chip.setOnClickListener {
+                chips.forEach { it.setBackgroundResource(R.drawable.bg_chip_unselected) }
+                chip.setBackgroundResource(R.drawable.bg_chip_selected)
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
                 homeDashboardFragment.selectDate(dates[index])
             }
         }

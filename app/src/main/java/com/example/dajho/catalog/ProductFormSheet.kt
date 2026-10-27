@@ -258,7 +258,10 @@ class ProductFormSheet : BottomSheetDialogFragment() {
                         Toast.makeText(requireContext(), "No hay un negocio activo", Toast.LENGTH_LONG).show()
                         return@launch
                     }
+<<<<<<< HEAD
                 android.util.Log.d("DEBUG_FORM", "businessId al guardar producto: $businessId")
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 
                 val productEntity = ProductEntity(
                     id = currentProductId,

@@ -22,8 +22,11 @@ import com.example.dajho.data.local.DatabaseSeeder
 import com.example.dajho.data.local.entity.ClientEntity
 import com.example.dajho.data.local.entity.SupplierEntity
 import com.example.dajho.data.local.datastore.UserPreferences
+<<<<<<< HEAD
 import com.example.dajho.data.repository.ClientRepositoryImpl
 import com.example.dajho.data.sync.SyncManager
+=======
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
 import com.example.dajho.util.toCentsLong
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -231,6 +234,7 @@ class ClientListFragment : Fragment() {
     private fun showClientForm(client: Client?) {
         val sheet = ClientFormSheet.newInstance(client)
         sheet.onClientSaved = { savedClient ->
+<<<<<<< HEAD
             viewLifecycleOwner.lifecycleScope.launch {
                 val db = AppDatabase.getInstance(requireContext())
                 val businessId = UserPreferences(requireContext()).businessIdFlow.first()
@@ -263,6 +267,38 @@ class ClientListFragment : Fragment() {
                         debtCents = savedClient.debt.toCentsLong()
                     )
                     clientRepo.saveSupplier(supplierEntity)
+=======
+            if (currentTab == DebtTab.POR_COBRAR) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val entityId = clientIdsByUiId[savedClient.id] ?: java.util.UUID.randomUUID().toString()
+                    AppDatabase.getInstance(requireContext()).clientSupplierDao().insertClient(
+                        ClientEntity(
+                            id = entityId,
+                            businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                                ?: return@launch,
+                            name = savedClient.name,
+                            phone = savedClient.phone,
+                            info = savedClient.info,
+                            debtCents = savedClient.debt.toCentsLong()
+                        )
+                    )
+                }
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val businessId = UserPreferences(requireContext()).businessIdFlow.first()
+                        ?: return@launch
+                    val supplierId = supplierIdsByUiId[savedClient.id] ?: java.util.UUID.randomUUID().toString()
+                    AppDatabase.getInstance(requireContext()).clientSupplierDao().insertSupplier(
+                        SupplierEntity(
+                            id = supplierId,
+                            businessId = businessId,
+                            name = savedClient.name,
+                            phone = savedClient.phone,
+                            info = savedClient.info,
+                            debtCents = savedClient.debt.toCentsLong()
+                        )
+                    )
+>>>>>>> 0f93a4a83ec40e8ea28347f46453a5399c98f3e6
                 }
 
                 com.example.dajho.data.sync.SyncManager.triggerImmediateSync(requireContext())
